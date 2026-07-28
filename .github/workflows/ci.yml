@@ -1,0 +1,36 @@
+# Багцын чанарын хаалга — typecheck + unit тест.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Тест
+        run: npm test
+
+  # Багц нь брэндийн нэрийг агуулж БОЛОХГҮЙ — тэр нь аппын өмч. Энэ хаалга
+  # `public-gerege-template`-ийн check-brand.mjs-тэй ижил зорилготой.
+  brand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Брэндийн нэр багцад алга эсэх
+        run: |
+          if git grep -nIE 'Gerege Template Platform|Hurdan|Ring Platform|Gerege POS|Gerege Kiosk' -- src; then
+            echo "::error::Багцад платформын брэндийн нэр орсон байна — UiCoreProvider-оор дамжуул."
+            exit 1
+          fi
+          echo "Цэвэр."
