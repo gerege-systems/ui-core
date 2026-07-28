@@ -29,6 +29,13 @@ export interface UiCoreConfig {
   brandName: string;
   /** Багцлагдсан landing текстийн суурь утга (ThemeEditor-т л хэрэгтэй). */
   landingCopy?: Record<Lang, LandingCopy>;
+  /**
+   * Баримтын сайтын хаяг (`brand.config.ts`-ийн `docsUrl`). Өгвөл хэрэглэгчийн
+   * цэсэнд «Баримт бичиг» холбоос гарна; өгөөгүй бол огт харагдахгүй.
+   */
+  docsUrl?: string;
+  /** Тусламжийн хуудас. Өгөөгүй бол `https://dgov.mn/help`. */
+  helpUrl?: string;
 }
 
 const Ctx = createContext<UiCoreConfig>({ brandName: '' });
@@ -42,6 +49,8 @@ const Ctx = createContext<UiCoreConfig>({ brandName: '' });
 export function UiCoreProvider({
   brandName,
   landingCopy,
+  docsUrl,
+  helpUrl,
   children,
 }: Partial<UiCoreConfig> & { children: React.ReactNode }) {
   const parent = useContext(Ctx);
@@ -49,8 +58,11 @@ export function UiCoreProvider({
     () => ({
       brandName: brandName ?? parent.brandName,
       landingCopy: landingCopy ?? parent.landingCopy,
+      docsUrl: docsUrl ?? parent.docsUrl,
+      helpUrl: helpUrl ?? parent.helpUrl,
     }),
-    [brandName, landingCopy, parent.brandName, parent.landingCopy],
+    [brandName, landingCopy, docsUrl, helpUrl,
+     parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -73,4 +85,22 @@ export function useLandingCopy(): Record<Lang, LandingCopy> {
     );
   }
   return copy;
+}
+
+/**
+ * Интерфэйсийн хэлд тохирсон баримтын хаяг. Баримт нь Монгол (эх) + English
+ * хоёр хэлтэй тул zh/ru интерфэйсээс англи хувилбар руу чиглүүлнэ —
+ * mkdocs-static-i18n нь орчуулагдаагүй хуудсыг эхээр нөхдөг тул 404 гарахгүй.
+ *
+ * `docsUrl` өгөөгүй бол `null` — дуудагч тал холбоосыг огт харуулахгүй.
+ */
+export function useDocsUrl(lang: string): string | null {
+  const base = useContext(Ctx).docsUrl;
+  if (!base) return null;
+  return lang === 'mn' ? base : `${base.endsWith('/') ? base : `${base}/`}en/`;
+}
+
+/** Тусламжийн хуудас. Өгөөгүй бол флотын анхдагч. */
+export function useHelpUrl(): string {
+  return useContext(Ctx).helpUrl ?? 'https://dgov.mn/help';
 }

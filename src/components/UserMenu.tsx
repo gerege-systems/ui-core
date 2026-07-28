@@ -2,12 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, User, Settings, Globe, Moon, Sun, Monitor, HelpCircle, LogOut } from 'lucide-react';
+import { ChevronDown, User, Settings, Globe, Moon, Sun, Monitor, BookOpen, HelpCircle, LogOut } from 'lucide-react';
 import SegmentedControl from './SegmentedControl';
 import { usePreferences, showToast } from '../lib/preferences';
 import { useLang, useT } from '../lib/lang';
 import { t as translate, type LangCode } from '../lib/i18n';
 import { signOut } from '../lib/signout';
+import { useDocsUrl, useHelpUrl } from '../config';
 
 // Сонгогчид харагдах богино шошго. Super admin-ий нэмсэн хэлэнд кодыг томоор
 // (жишээ нь 'ja' → 'JA') үзүүлнэ — хэлний эх нэр нь aria-label дээр байна.
@@ -27,6 +28,8 @@ export default function UserMenu({ username, email, initials, picture }: Props) 
   const { theme, setTheme } = usePreferences();
   const { setLang } = useLang();
   const { lang, T, languages } = useT();
+  const docsHref = useDocsUrl(lang);
+  const helpHref = useHelpUrl();
 
   // Гадна дарах + Escape хаах
   useEffect(() => {
@@ -140,7 +143,16 @@ export default function UserMenu({ username, email, initials, picture }: Props) 
 
           <div className="user-menu__divider" role="separator" />
 
-          <a className="user-menu__item" role="menuitem" href="https://dgov.mn/help" target="_blank" rel="noreferrer">
+          {/* Баримтын сайт — интерфэйсийн хэлд тохирсон хувилбар. Платформ
+              `docsUrl` өгөөгүй бол огт харагдахгүй. */}
+          {docsHref && (
+            <a className="user-menu__item" role="menuitem" href={docsHref} target="_blank" rel="noreferrer">
+              <BookOpen size={16} strokeWidth={2} />
+              <span>{T('nav.docs')}</span>
+            </a>
+          )}
+
+          <a className="user-menu__item" role="menuitem" href={helpHref} target="_blank" rel="noreferrer">
             <HelpCircle size={16} strokeWidth={2} />
             <span>{T('nav.help')}</span>
           </a>

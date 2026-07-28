@@ -64,7 +64,11 @@ import { UiCoreProvider } from '@gerege/ui-core';
 import { brand } from '@/brand.config';
 import { landingCopy } from '@/components/landing/copy';
 
-<UiCoreProvider brandName={brand.name} landingCopy={landingCopy}>
+<UiCoreProvider
+  brandName={brand.name}
+  docsUrl={brand.docsUrl}      // хэрэглэгчийн цэсэнд «Баримт бичиг» гарна
+  landingCopy={landingCopy}
+>
   {children}
 </UiCoreProvider>
 ```
