@@ -22,9 +22,27 @@ landing текст, route бүртгэлээ л эзэмшинэ.
 
 ## Суулгах
 
+Багц нь **git тэгээр** тарна — репо нь нээлттэй тул нэвтрэлт огт шаардахгүй:
+
 ```bash
-npm install @gerege/ui-core
+npm install github:gerege-systems/ui-core#v0.1.0
 ```
+
+`package.json`-д:
+
+```json
+"dependencies": {
+  "@gerege/ui-core": "github:gerege-systems/ui-core#v0.1.0"
+}
+```
+
+> **Яагаад GitHub Packages биш вэ.** `npm.pkg.github.com` нь НЭЭЛТТЭЙ багцад ч
+> токен шаарддаг — тэгвэл хэрэглэгч репо бүрийн CI болон Dockerfile-д `.npmrc`
+> + secret хэрэгтэй болно (9 репо × 2 газар). Нээлттэй git URL нь тэр бүхнийг
+> шаардахгүй. `publish.yml` workflow нь registry рүү нийтлэх сонголтыг
+> хэвээр үлдээсэн — хэрэв хожим хаалттай `@gerege/ui-gerege` гарвал хэрэгтэй.
+
+Шинэчлэх: `package.json` дахь тэгийг солиод `npm install`.
 
 `next.config.mjs`-д **заавал**:
 
