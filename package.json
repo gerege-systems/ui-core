@@ -1,0 +1,51 @@
+{
+  "name": "@gerege/ui-core",
+  "version": "0.1.0",
+  "description": "Gerege флотын нийтлэг frontend давхарга — lib (API, i18n, theme, session) болон дундын React компонентууд.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gerege-systems/ui-core.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config.tsx",
+    "./types": "./src/types.ts",
+    "./lib/lang": "./src/lib/lang.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./components/*": "./src/components/*.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "lucide-react": "^1.23.0",
+    "next": "^16.2.12",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "@types/node": "20.11.30",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "lucide-react": "^1.23.0",
+    "next": "^16.2.12",
+    "qrcode.react": "^4.2.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "server-only": "^0.0.1",
+    "typescript": "5.4.3",
+    "vitest": "^4.1.10"
+  }
+}
