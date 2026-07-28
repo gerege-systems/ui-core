@@ -33,12 +33,25 @@ export interface UiCoreConfig {
 
 const Ctx = createContext<UiCoreConfig>({ brandName: '' });
 
+/**
+ * Provider-ууд ҮҮРЛЭЖ болно: доод давхарга нь өгсөн талбараа л дарж, бусдыг
+ * дээдээсээ өвлөнө. Ингэснээр root layout нь `brandName`-ээ нэг удаа өгөөд,
+ * зөвхөн ThemeEditor-той хуудас нь `landingCopy`-г нэмж өгнө — 460 мөр текст
+ * бүх хуудасны client bundle-д орохгүй.
+ */
 export function UiCoreProvider({
   brandName,
   landingCopy,
   children,
-}: UiCoreConfig & { children: React.ReactNode }) {
-  const value = useMemo(() => ({ brandName, landingCopy }), [brandName, landingCopy]);
+}: Partial<UiCoreConfig> & { children: React.ReactNode }) {
+  const parent = useContext(Ctx);
+  const value = useMemo(
+    () => ({
+      brandName: brandName ?? parent.brandName,
+      landingCopy: landingCopy ?? parent.landingCopy,
+    }),
+    [brandName, landingCopy, parent.brandName, parent.landingCopy],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
