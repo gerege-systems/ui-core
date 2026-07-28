@@ -107,3 +107,31 @@ npm install
 npm run typecheck   # tsc --noEmit
 npm test            # vitest run
 ```
+
+## BFF route-ууд (`app/api/**`)
+
+158 BFF route-ийн **логик** нь багцад (`src/api/**`). Next.js нь route-ыг
+файлын системээр бүртгэдэг тул апп нь зам бүрд нэг мөрийн бүрхүүл үлдээнэ:
+
+```ts
+// src/app/api/gov/overview/route.ts
+export { GET, dynamic } from '@gerege/ui-core/api/gov/overview';
+```
+
+Динамик сегмент мөн ажиллана — багц дотор файлын нэр нь хаалтаа хэвээр авна:
+
+```ts
+// src/app/api/org/[id]/route.ts
+export { GET, PUT, DELETE, dynamic } from '@gerege/ui-core/api/org/[id]';
+```
+
+**Бүрхүүлийг яагаад үлдээв.** Route-ын жагсаалт нь аюулгүй байдлын
+**зөвшөөрлийн жагсаалт** — хөтчөөс backend-ийн аль зам хүрч болохыг тодорхойлно.
+Ганц `[...path]` catch-all болгож 158 файлыг 1 болгож болох ч тэр нь тэрхүү
+жагсаалтыг устгаж, backend-ийн БҮХ зам руу проксиг нээнэ. Иймд бүрхүүл нь
+зориудын үнэ — файл бүр 1 мөр, логик нь багцад ганц хувь.
+
+> `export const dynamic`-ыг **заавал дахин экспортлоно**. Next.js нь route-ын
+> тохиргоог модулийн export-оос уншдаг тул орхивол route чимээгүйгээр
+> `force-dynamic`-аа алдана (туршиж батлав: `force-static`-ыг дахин
+> экспортлоход `○`, орхиход `ƒ`).
