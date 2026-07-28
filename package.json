@@ -1,6 +1,6 @@
 {
   "name": "@gerege/ui-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Gerege флотын нийтлэг frontend давхарга — lib (API, i18n, theme, session) болон дундын React компонентууд.",
   "license": "MIT",
   "repository": {
@@ -20,7 +20,8 @@
     "./api/*": "./src/api/*.ts",
     "./lib/lang": "./src/lib/lang.tsx",
     "./lib/*": "./src/lib/*.ts",
-    "./components/*": "./src/components/*.tsx"
+    "./components/*": "./src/components/*.tsx",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

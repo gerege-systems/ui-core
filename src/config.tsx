@@ -36,7 +36,18 @@ export interface UiCoreConfig {
   docsUrl?: string;
   /** Тусламжийн хуудас. Өгөөгүй бол `https://dgov.mn/help`. */
   helpUrl?: string;
+  /**
+   * Баримтын сайт БОДИТООР ямар хэлтэй вэ. Эхнийх нь үндсэн локал —
+   * түүнд угтвар нэмэхгүй, бусдад `<base>/<code>/`. Жагсаалтад байхгүй хэлээр
+   * UI байвал хоёр дахь хэл рүү (ихэвчлэн англи) уналт хийнэ.
+   *
+   * Анхдагч `['mn', 'en']` — флотын ихэнх баримтын сайт хоёр хэлтэй. POS шиг
+   * дөрвөн хэлтэй сайт `['mn','en','zh','ru']` гэж өгнө.
+   */
+  docsLangs?: readonly string[];
 }
+
+const DEFAULT_DOCS_LANGS = ['mn', 'en'] as const;
 
 const Ctx = createContext<UiCoreConfig>({ brandName: '' });
 
@@ -51,6 +62,7 @@ export function UiCoreProvider({
   landingCopy,
   docsUrl,
   helpUrl,
+  docsLangs,
   children,
 }: Partial<UiCoreConfig> & { children: React.ReactNode }) {
   const parent = useContext(Ctx);
@@ -60,9 +72,11 @@ export function UiCoreProvider({
       landingCopy: landingCopy ?? parent.landingCopy,
       docsUrl: docsUrl ?? parent.docsUrl,
       helpUrl: helpUrl ?? parent.helpUrl,
+      docsLangs: docsLangs ?? parent.docsLangs,
     }),
-    [brandName, landingCopy, docsUrl, helpUrl,
-     parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl],
+    [brandName, landingCopy, docsUrl, helpUrl, docsLangs,
+     parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl,
+     parent.docsLangs],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -88,16 +102,22 @@ export function useLandingCopy(): Record<Lang, LandingCopy> {
 }
 
 /**
- * Интерфэйсийн хэлд тохирсон баримтын хаяг. Баримт нь Монгол (эх) + English
- * хоёр хэлтэй тул zh/ru интерфэйсээс англи хувилбар руу чиглүүлнэ —
- * mkdocs-static-i18n нь орчуулагдаагүй хуудсыг эхээр нөхдөг тул 404 гарахгүй.
+ * Интерфэйсийн хэлд тохирсон баримтын хаяг.
+ *
+ * Баримтын сайт нь UI-аас цөөн хэлтэй байж болно (ихэнх нь монгол + англи).
+ * Тиймээс жагсаалтад байхгүй хэлээр UI ажиллаж байвал хоёр дахь хэл рүү
+ * уналт хийнэ — mkdocs-static-i18n нь орчуулагдаагүй хуудсыг эхээр нөхдөг
+ * тул 404 гарахгүй.
  *
  * `docsUrl` өгөөгүй бол `null` — дуудагч тал холбоосыг огт харуулахгүй.
  */
 export function useDocsUrl(lang: string): string | null {
-  const base = useContext(Ctx).docsUrl;
+  const { docsUrl: base, docsLangs = DEFAULT_DOCS_LANGS } = useContext(Ctx);
   if (!base) return null;
-  return lang === 'mn' ? base : `${base.endsWith('/') ? base : `${base}/`}en/`;
+  const root = base.endsWith('/') ? base : `${base}/`;
+  const [primary, fallback = 'en'] = docsLangs;
+  if (lang === primary) return root;
+  return `${root}${docsLangs.includes(lang) ? lang : fallback}/`;
 }
 
 /** Тусламжийн хуудас. Өгөөгүй бол флотын анхдагч. */
