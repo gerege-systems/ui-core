@@ -21,7 +21,7 @@ import { useT } from '../lib/lang';
 import type { DictKey } from '../lib/i18n';
 import { displayName, isAdminLevel, isSuperAdmin } from '../lib/types';
 import { initialsOf } from '../lib/format';
-import { useBrandName } from '../config';
+import { useBrandName, useDocsUrl, useHelpUrl } from '../config';
 
 export interface AppUser {
   username: string;
@@ -66,7 +66,6 @@ interface NavSystem {
 
 // BPMN, translator, AI зэрэг хэсгүүдийг хассан — зөвхөн generic admin цөм.
 // Баримтжуулалт — MkDocs Material сайт, GitHub Pages дээр (docs-site/ эх код).
-const DOCS_URL = 'https://gerege-systems.github.io/public-gerege-template/';
 
 const SYSTEMS: NavSystem[] = [
   {
@@ -214,6 +213,8 @@ export default function AppShell({ user, children }: Props) {
   const brandName = useBrandName();
   const pathname = usePathname() ?? '/';
   const { T, lang } = useT();
+  const docsHref = useDocsUrl(lang);
+  const helpHref = useHelpUrl();
   const isAdmin = isAdminLevel(user.roleId); // super admin + admin
   const isSuper = isSuperAdmin(user.roleId);
 
@@ -348,10 +349,12 @@ export default function AppShell({ user, children }: Props) {
           })}
         </nav>
         <div className="iconrail__bottom">
-          <a className="iconrail__btn" href={DOCS_URL} target="_blank" rel="noreferrer" title={T('nav.docs')} aria-label={T('nav.docs')}>
-            <BookOpen size={20} strokeWidth={2} />
-          </a>
-          <a className="iconrail__btn" href="https://dgov.mn/help" target="_blank" rel="noreferrer" title={T('nav.help')} aria-label={T('nav.help')}>
+          {docsHref && (
+            <a className="iconrail__btn" href={docsHref} target="_blank" rel="noreferrer" title={T('nav.docs')} aria-label={T('nav.docs')}>
+              <BookOpen size={20} strokeWidth={2} />
+            </a>
+          )}
+          <a className="iconrail__btn" href={helpHref} target="_blank" rel="noreferrer" title={T('nav.help')} aria-label={T('nav.help')}>
             <HelpCircle size={20} strokeWidth={2} />
           </a>
           <button className="iconrail__btn iconrail__signout" type="button" title={T('nav.signout')} aria-label={T('nav.signout')} onClick={() => signOut()}>
@@ -412,10 +415,12 @@ export default function AppShell({ user, children }: Props) {
           <div className="topbar2__spacer" />
           <NavSearch items={searchItems} placeholder={T('shell.search')} emptyText={T('shell.noResults')} />
           <div className="topbar2__actions">
-            <a className="topbar2__docs" href={DOCS_URL} target="_blank" rel="noreferrer" title={T('nav.docs')} aria-label={T('nav.docs')}>
-              <BookOpen size={16} strokeWidth={2} />
-              <span>{T('nav.docs')}</span>
-            </a>
+            {docsHref && (
+              <a className="topbar2__docs" href={docsHref} target="_blank" rel="noreferrer" title={T('nav.docs')} aria-label={T('nav.docs')}>
+                <BookOpen size={16} strokeWidth={2} />
+                <span>{T('nav.docs')}</span>
+              </a>
+            )}
             <UserMenu username={displayName(user, lang)} email={user.email} initials={initialsOf(displayName(user, lang))} picture={user.picture} />
           </div>
         </header>

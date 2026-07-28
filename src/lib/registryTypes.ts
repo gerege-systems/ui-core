@@ -1,4 +1,4 @@
-// R1 — Үйлчилгээний нэгдсэн регистрийн frontend типүүд
+// Ring System · R1 — Үйлчилгээний нэгдсэн регистрийн frontend типүүд
 // (backend responses_registry.go-ийн snake_case DTO-той тохирно).
 
 /** Паспортын статус. */
@@ -50,6 +50,29 @@ export interface RegistryService {
   proactivity: Proactivity;
   status: RegistryStatus;
   life_event_id?: string | null;
+
+  /**
+   * Үйл ажиллагааны тохиргоо (migration 47) — паспорт нийтлэгдэхэд иргэний
+   * порталын ажлын каталог (gov_services) руу БУУДАГ хэсэг. Регистр нь
+   * үйлчилгээний цорын ганц эх сурвалж тул эдгээрийг ЭНД засна.
+   */
+  category: string;
+  cofog_code: string;
+  cofog_label: string;
+  main_activity: string;
+  sdg_code: string;
+  processing_time: string;
+  output_type: OutputType;
+  output_ref_type: string;
+  assurance_level: AssuranceLevel;
+  /** auto = бүртгэлээс шууд олгоно; manual = менежер хянана. */
+  fulfilment: Fulfilment;
+  has_discretion: boolean;
+  has_assessment: boolean;
+  sla_hours: number;
+  tacit_approval: boolean;
+  online: boolean;
+
   version: number;
   published_at?: string | null;
   created_at: string;
@@ -75,7 +98,39 @@ export interface RegistryServiceInput {
   annual_volume?: number;
   proactivity?: Proactivity;
   life_event_id?: string | null;
+
+  category?: string;
+  cofog_code?: string;
+  cofog_label?: string;
+  main_activity?: string;
+  sdg_code?: string;
+  processing_time?: string;
+  output_type?: OutputType;
+  output_ref_type?: string;
+  assurance_level?: AssuranceLevel;
+  fulfilment?: Fulfilment;
+  has_discretion?: boolean;
+  has_assessment?: boolean;
+  sla_hours?: number;
+  tacit_approval?: boolean;
+  online?: boolean;
 }
+
+/** Биелүүлэх горим — иргэн юу хүлээхийг тодорхойлдог гол ялгаа. */
+export type Fulfilment = 'auto' | 'manual';
+
+/** eIDAS (Reg. 910/2014 Art.8) баталгаажилтын түвшин. */
+export type AssuranceLevel = 'low' | 'substantial' | 'high';
+
+/** CPSV-AP-ийн Output толь (cpsv:produces). */
+export type OutputType =
+  | 'Declaration' | 'Physical object' | 'Code'
+  | 'Financial obligation' | 'Financial benefit' | 'Recognition' | 'Permit';
+
+export const OUTPUT_TYPES: OutputType[] = [
+  'Declaration', 'Physical object', 'Code',
+  'Financial obligation', 'Financial benefit', 'Recognition', 'Permit',
+];
 
 export interface RegistryVersion {
   id: string;

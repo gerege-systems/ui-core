@@ -29,8 +29,18 @@ jobs:
       - uses: actions/checkout@v7
       - name: Брэндийн нэр багцад алга эсэх
         run: |
-          if git grep -nIE 'Gerege Template Platform|Hurdan|Ring Platform|Gerege POS|Gerege Kiosk' -- src; then
+          if git grep -nIE 'Gerege Template Platform|Hurdan|Ring Platform|Gerege POS|Gerege Kiosk|Government Template Platform' -- src; then
             echo "::error::Багцад платформын брэндийн нэр орсон байна — UiCoreProvider-оор дамжуул."
+            exit 1
+          fi
+          # Платформ тусгайлсан ХАЯГ ч мөн адил: багц дотор хатуу бичигдсэн
+          # docs/help хаяг нь БҮХ платформ дээр буруу газар заана. Ийм алдаа
+          # нэг удаа гарсан (AppShell дотор public-gerege-template-ийн док).
+          # `config.tsx` нь тохиргооны анхдагчийг зарладаг цорын ганц газар;
+          # тестийн жишиг хаягууд ч мөн зөвшөөрөгдөнө.
+          if git grep -nIE "https?://(docs\.|[a-z-]+\.)?(gerege|dgov)\.mn|github\.io/[a-z-]+" \
+               -- src ':!src/config.tsx' ':!src/**/*.test.ts'; then
+            echo "::error::Багцад платформын хаяг хатуу бичигдсэн — docsUrl/helpUrl тохиргоог ашигла."
             exit 1
           fi
           echo "Цэвэр."
