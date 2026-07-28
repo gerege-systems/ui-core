@@ -22,19 +22,20 @@ landing текст, route бүртгэлээ л эзэмшинэ.
 
 ## Суулгах
 
-Багц нь **git тэгээр** тарна — репо нь нээлттэй тул нэвтрэлт огт шаардахгүй:
-
-```bash
-npm install github:gerege-systems/ui-core#v0.1.0
-```
-
-`package.json`-д:
+Багц нь **тэгийн HTTPS tarball-аар** тарна — репо нээлттэй тул нэвтрэлт
+шаардахгүй:
 
 ```json
 "dependencies": {
-  "@gerege/ui-core": "github:gerege-systems/ui-core#v0.1.0"
+  "@gerege/ui-core": "https://github.com/gerege-systems/ui-core/archive/refs/tags/v0.1.0.tar.gz"
 }
 ```
+
+> **Яагаад `github:gerege-systems/ui-core#v0.1.0` биш вэ.** npm нь `github:`
+> хэлбэрийг `git clone`-оор шийддэг тул хостод `git` binary хэрэгтэй.
+> `node:20-alpine` дотор git байдаггүй — Docker build `npm error syscall spawn
+> git`-ээр унана (туршиж батлав). HTTPS tarball нь зөвхөн сүлжээ шаардана,
+> мөн `package-lock.json`-д жинхэнэ `integrity` hash үлдээнэ.
 
 > **Яагаад GitHub Packages биш вэ** (UI_CORE_PLAN.md-д анх түүнийг төлөвлөсөн):
 >
@@ -46,7 +47,7 @@ npm install github:gerege-systems/ui-core#v0.1.0
 >
 > Нээлттэй git URL нь хоёуланг нь шаардахгүй, Docker build дотор ч ажиллана.
 
-Шинэчлэх: `package.json` дахь тэгийг солиод `npm install`.
+Шинэчлэх: URL доторх тэгийг солиод `npm install`.
 
 `next.config.mjs`-д **заавал**:
 
