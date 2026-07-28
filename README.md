@@ -36,11 +36,15 @@ npm install github:gerege-systems/ui-core#v0.1.0
 }
 ```
 
-> **Яагаад GitHub Packages биш вэ.** `npm.pkg.github.com` нь НЭЭЛТТЭЙ багцад ч
-> токен шаарддаг — тэгвэл хэрэглэгч репо бүрийн CI болон Dockerfile-д `.npmrc`
-> + secret хэрэгтэй болно (9 репо × 2 газар). Нээлттэй git URL нь тэр бүхнийг
-> шаардахгүй. `publish.yml` workflow нь registry рүү нийтлэх сонголтыг
-> хэвээр үлдээсэн — хэрэв хожим хаалттай `@gerege/ui-gerege` гарвал хэрэгтэй.
+> **Яагаад GitHub Packages биш вэ** (UI_CORE_PLAN.md-д анх түүнийг төлөвлөсөн):
+>
+> 1. `npm.pkg.github.com` нь scope-ыг байгууллагын нэртэй ЯГ таарахыг шаарддаг.
+>    `@gerege` ≠ `gerege-systems` тул нийтлэх оролдлого `403 permission_denied`
+>    өгнө. Багцыг `@gerege-systems/ui-core` болгож нэрлэвэл л боломжтой.
+> 2. Түүнчлэн registry нь НЭЭЛТТЭЙ багцад ч токен шаарддаг — репо бүрийн CI ба
+>    Dockerfile-д `.npmrc` + secret хэрэгтэй болно (9 репо × 2 газар).
+>
+> Нээлттэй git URL нь хоёуланг нь шаардахгүй, Docker build дотор ч ажиллана.
 
 Шинэчлэх: `package.json` дахь тэгийг солиод `npm install`.
 
