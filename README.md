@@ -93,9 +93,31 @@ import { useLang } from '@gerege/ui-core/lib/lang';
 | Багцад | Аппад |
 |---|---|
 | `lib/**` — api, bff, i18n, theme, session, pki … | `brand.config.ts` |
-| `components/**` — shell, admin, me, gov, registry, relay … | `components/landing/**` (брэндийн текст + холбоос) |
+| `components/**` — shell, admin, me, gov, registry, relay, нэвтрэлт … | `components/landing/**` (брэндийн текст + холбоос) |
 | `types.ts` — `LandingCopy` **бүтэц** | `landing/copy.ts` — тэр бүтцийн **агуулга** |
 | | `app/**/page.tsx`, `app/globals.css`, `app/manifest.ts` |
+
+## Нэвтрэх гадаргуу — `LoginPanel`
+
+Платформ **өөрөө нэвтрүүлэх** (нэвтрэх карт нүүрэн дээр — sso.dgov.mn маягийн
+SSO үйлчилгээ) эсвэл **дээд SSO руу шилжүүлэх** (relying party) эсэх нь кодын
+ялгаа БИШ, **тохиргоо**. Backend-ийн `AUTH_MODE` (`provider` | `client`) нь
+ганц эх сурвалж; frontend түүнийг `GET /site/auth`-аас уншина.
+
+```tsx
+// app/login/page.tsx — server component
+import { fetchAuthMode } from '@gerege/ui-core/lib/authMode';
+import LoginPanel from '@gerege/ui-core/components/LoginPanel';
+
+const auth = await fetchAuthMode();
+<LoginPanel auth={auth} next={next} ssoFailed={sp.error === 'sso'} />
+```
+
+`LoginPanel` нь **server** компонент: горим нь `server-only` эх сурвалжаас
+(backend) ирдэг тул сонголт серверт хийгдэнэ, дүрслэгдээгүй салаа нь client
+талд ажиллахгүй. (Bundle хэмнэлт БИШ — Next нь хоёр салааны chunk-ыг route-ын
+manifest-д хэвээр үлдээнэ.) Нүүр хуудсанд нэвтрэх товчийн зорилгыг
+`loginHref(auth, next)` өгнө (`#login` эсвэл `/api/auth/sso/start`).
 
 Хоёр зүйлийг апп **заавал** нийлүүлнэ:
 
