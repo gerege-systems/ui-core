@@ -5,6 +5,7 @@
 // нийцнэ; config нь уян хатан (frontend copy.ts/globals.css default дээр deep-merge).
 
 import type { LandingCopy } from '../types';
+import type { Lang } from './i18n';
 
 /** Theme-д засах боломжтой base өнгөний токенууд (globals.css :root-тэй нийцнэ).
  *  hover/soft/text хувилбарыг globals.css color-mix-ээр гаргана. */
@@ -53,12 +54,14 @@ export interface ThemeAppearance {
 
 export interface ThemeConfig {
   appearance?: ThemeAppearance;
-  landing?: {
-    mn?: Partial<LandingCopy>;
-    en?: Partial<LandingCopy>;
-    zh?: Partial<LandingCopy>;
-    ru?: Partial<LandingCopy>;
-  };
+  /**
+   * Landing-ийн текстийн override — багцлагдсан хэл бүрд сонголттой.
+   *
+   * Түлхүүрийг гараар жагсаахын оронд `Lang`-аас гаргаж байгаа нь зориуд:
+   * шинэ хэл нэмэхэд энэ газрыг мартвал ThemeEditor тэр хэлийг харуулж
+   * чадахгүй байсан (араб нэмэхэд яг тэр алдаа гарсан).
+   */
+  landing?: Partial<Record<Lang, Partial<LandingCopy>>>;
 }
 
 /** Backend-ээс ирэх нэрлэсэн theme (жагсаалт/CRUD). */
