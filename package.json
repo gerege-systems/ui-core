@@ -1,6 +1,6 @@
 {
   "name": "@gerege/ui-core",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Gerege флотын нийтлэг frontend давхарга — lib (API, i18n, theme, session) болон дундын React компонентууд.",
   "license": "MIT",
   "repository": {
