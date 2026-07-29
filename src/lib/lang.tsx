@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  t, permLabel, roleName, localeOf, LANGS, LANG_LABELS, LOCALES,
+  t, permLabel, roleName, localeOf, dirOf, LANGS, LANG_LABELS, LOCALES,
   type DictKey, type LangCode,
 } from './i18n';
 
@@ -130,7 +130,13 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* no-op */
     }
-    if (typeof document !== 'undefined') document.documentElement.setAttribute('lang', l);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', l);
+      // Араб зэрэг баруунаас зүүн бичигтэй хэлэнд `dir`-ийг мөн солино.
+      // Орчуулга дангаараа хангалтгүй: `dir` тохируулаагүй бол хуудасны
+      // байрлал, цэс, оролтын талбарууд бүгд буруу тал руугаа хэвээр үлдэнэ.
+      document.documentElement.setAttribute('dir', dirOf(l));
+    }
   }, []);
 
   const locale = useMemo(
