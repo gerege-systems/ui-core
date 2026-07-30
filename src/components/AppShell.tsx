@@ -44,6 +44,14 @@ interface NavItem {
   icon: typeof User;
   perm?: string; // шаардагдах эрх; байхгүй бол бүх нэвтэрсэн хэрэглэгчид
   superAdminOnly?: boolean; // зөвхөн super admin (perm bypass-д хамаарахгүй)
+  /**
+   * ЗӨВХӨН ил хүсэлтээр. Ихэнх цэс нь `navRoutes` өгөөгүй үед ХАРАГДДАГ
+   * (анхдагч нь «бүгдийг үйлчилдэг»). Харин цөөн платформ л үйлчилдэг
+   * зүйлд тэр анхдагч буруу: `navRoutes` тохируулаагүй бүх репод үхсэн
+   * холбоос гарна. Ийм зүйлийг `optIn` гэж тэмдэглэвэл `navRoutes`-д ИЛ
+   * бичсэн платформ дээр л гарна.
+   */
+  optIn?: boolean;
 }
 // Дэд систем (subsystem) = систем доторх нэрлэсэн бүлэг — зүүн цэсийн ДУНД түвшин.
 // Систем бүр ДОР ХАЯЖ 1 дэд системтэй тул labelKey ЗААВАЛ (нэргүй бүлэг байхгүй).
@@ -171,10 +179,10 @@ const SYSTEMS: NavSystem[] = [
         labelKey: 'group.govServices',
         items: [
           { href: '/me/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-          // Иргэний хэтэвч — eID дээр суурилсан IBAN данс. Хэтэвчийн платформ
-          // л үйлчилдэг; бусад дээр `navRoutes` шүүлтээр гарахгүй (gateway,
-          // relay, бүртгэлийн модультой ижил зарчим).
-          { href: '/me/wallet', labelKey: 'nav.wallet', icon: Wallet },
+          // Иргэний хэтэвч — eID дээр суурилсан IBAN данс. ЗӨВХӨН хэтэвчийн
+          // платформ үйлчилдэг тул `optIn`: `navRoutes`-д ил бичсэн репод л
+          // гарна, бусад дээр (навRoutes тохируулаагүй ч) харагдахгүй.
+          { href: '/me/wallet', labelKey: 'nav.wallet', icon: Wallet, optIn: true },
           { href: '/me/services', labelKey: 'nav.govServices', icon: Landmark },
           { href: '/me/applications', labelKey: 'nav.govApplications', icon: Inbox },
           { href: '/me/references', labelKey: 'nav.govReferences', icon: FileCheck },
@@ -241,9 +249,9 @@ export default function AppShell({ user, children }: Props) {
   // `navRoutes` өгөөгүй бол шүүхгүй — бүх модулиа хэрэгжүүлсэн платформ (template,
   // sso) юу ч тохируулахгүй, өмнөх зан ажиллагаа хэвээр.
   const { navRoutes, navSystemLabels } = useNavConfig();
-  const served = (href: string) =>
-    !navRoutes ||
-    navRoutes.some((r) => href === r || href.startsWith(r.endsWith('/') ? r : r + '/'));
+  const listed = (href: string) =>
+    (navRoutes ?? []).some((r) => href === r || href.startsWith(r.endsWith('/') ? r : r + '/'));
+  const served = (i: NavItem) => (i.optIn ? listed(i.href) : !navRoutes || listed(i.href));
 
   // Rail-ийн нэрийг платформ дарж бичсэн бол сольно (хэтэвчид «Иргэн» биш
   // «Түрийвч»). Зөвхөн ЭНГИЙН УТГА — server→client хилээр дүрс дамжихгүй тул
@@ -258,7 +266,7 @@ export default function AppShell({ user, children }: Props) {
 
   const visibleSubsystems = (s: NavSystem) =>
     s.subsystems
-      .map((g) => ({ ...g, items: g.items.filter((i) => served(i.href) && canSeeItem(i)) }))
+      .map((g) => ({ ...g, items: g.items.filter((i) => served(i) && canSeeItem(i)) }))
       .filter((g) => g.items.length > 0);
   const systems = nav.filter((s) => {
     if (s.superAdminOnly && !isSuper) return false;
