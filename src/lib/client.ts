@@ -64,3 +64,35 @@ export async function getJSON<T>(path: string): Promise<T> {
   if (!body?.ok) throw new Error(body?.message || `Хүсэлт амжилтгүй (${res.status})`);
   return body.data as T;
 }
+
+/**
+ * FormData (файл) илгээх POST. sendJSON-той адил CSRF header (`x-dgov-csrf`)
+ * тавьдаг тул BFF-ийн checkOrigin давна. Content-Type-г ГАРААР тавихгүй —
+ * multipart boundary-г browser өөрөө бүрдүүлэх ёстой (гараар тавьвал boundary
+ * алдагдаж backend задлан унших чадахгүй). Том файлыг JSON болгодоггүй тул
+ * CSV/XES/зураг ачаалалт зэрэгт үүнийг ашиглана.
+ */
+export async function postForm<T = unknown>(path: string, form: FormData): Promise<ClientResult<T>> {
+  try {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { [CSRF_HEADER]: '1' },
+      body: form,
+    });
+    let data: ClientResult<T> | null = null;
+    try {
+      data = (await res.json()) as ClientResult<T>;
+    } catch {
+      /* body хоосон байж болно */
+    }
+    return {
+      ok: data?.ok ?? res.ok,
+      status: data?.status ?? res.status,
+      message: data?.message,
+      fieldErrors: data?.fieldErrors,
+      data: data?.data,
+    };
+  } catch {
+    return { ok: false, status: 0, message: 'Сүлжээний алдаа. Дахин оролдоно уу.' };
+  }
+}
