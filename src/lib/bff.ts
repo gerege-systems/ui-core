@@ -119,3 +119,45 @@ export function proxyResult<T>(r: ApiResult<T>): NextResponse {
     { status: httpStatus },
   );
 }
+
+/**
+ * Backend-ийн ДУГТУЙГҮЙ (flat) хариуг вэб клиентийн дугтуйнд ХИЙЖ буцаана.
+ *
+ * Хоёр өөр гэрээг холбоно:
+ *   backend  — зарим endpoint флотын дугтуйг БИШ, flat JSON буцаадаг
+ *              (гар утасны апп эсвэл гуравдагч талын гэрээ; өөрчлөх боломжгүй).
+ *              Жишээ: хэтэвчийн /accounts/* нь {iban, available_minor, …}.
+ *   хөтөч    — `lib/client.ts`-ийн getJSON нь {ok, status, data} дугтуй
+ *              хүлээдэг ба `ok` үгүй бол ЗААВАЛ алдаа шиднэ.
+ *
+ * `authedRaw()`-ийн ХОС: тэр нь боловсруулаагүй `Response` буцаадаг ба энэ нь
+ * түүнийг клиентийн гэрээнд оруулна. Биетийг шууд дамжуулбал `getJSON` дугтуй
+ * олохгүй тул АМЖИЛТТАЙ хариуг ч алдаа гэж үзнэ.
+ */
+export async function proxyFlat(res: Response): Promise<NextResponse> {
+  const text = await res.text();
+  let body: unknown;
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    // Backend JSON биш хариу өгсөн (502 г.м.) — клиентэд цэвэр алдаа өгнө.
+    return NextResponse.json(
+      { ok: false, status: 502, message: 'backend returned a non-JSON response' },
+      { status: 502 },
+    );
+  }
+  const ok = res.ok;
+  return NextResponse.json(
+    {
+      ok,
+      status: res.status,
+      ...(ok
+        ? { data: body }
+        : { message: (body as { message?: string })?.message ?? `Хүсэлт амжилтгүй (${res.status})` }),
+    },
+    // Хөтөч рүү 200 буцаана: getJSON нь дугтуйн `ok`-оор шийддэг тул
+    // сүлжээний түвшний статусыг давхардуулах шаардлагагүй. Гэхдээ 401-ийг
+    // хэвээр үлдээнэ — middleware/session давхарга түүнийг ялгаж уншдаг.
+    { status: res.status === 401 ? 401 : 200 },
+  );
+}
