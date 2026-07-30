@@ -47,13 +47,16 @@ export async function fetchAuthMode(): Promise<SiteAuth> {
 /**
  * Нэвтрэх товчийн зорилго.
  *
- *   provider → '#login' (нэвтрэх карт нь хуудас дээрээ байгаа тул зүгээр л
- *              түүн рүү гүйлгэнэ; /login хуудсанд ч гэсэн no-op биш байхын
- *              тулд дуудагч тал өөрөө шийднэ)
+ *   provider → `providerHref` (анхдагч '#login')
  *   client   → '/api/auth/sso/start' (BFF нь дээд IdP-ийн authorize руу түлхнэ)
+ *
+ * `providerHref` яагаад параметр вэ: landing хуудас нэвтрэх картыг hero дотроо
+ * ШИГТГЭСЭН бол '#login' анкер зөв (тэр карт руу гүйлгэнэ). Харин карт
+ * шигтгээгүй landing дээр '#login' нь ХООСОН анкер — товч юу ч хийхгүй. Тийм
+ * платформ '/login' гэж дамжуулна.
  */
-export function loginHref(auth: SiteAuth, next?: string): string {
-  if (auth.mode === 'provider') return '#login';
+export function loginHref(auth: SiteAuth, next?: string, providerHref = '#login'): string {
+  if (auth.mode === 'provider') return providerHref;
   const q = next && next !== '/' ? `?next=${encodeURIComponent(next)}` : '';
   return `/api/auth/sso/start${q}`;
 }
