@@ -69,7 +69,7 @@ export default function AuditViewer() {
 
         {verify && (
           verify.ok ? (
-            <span className="badge badge--ok" style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <span className="badge badge--success" style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
               <ShieldCheck size={14} strokeWidth={2} />
               {T('audit.chainOk')}
             </span>

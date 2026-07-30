@@ -137,7 +137,7 @@ export default function GovQueueView() {
       </div>
 
       <div className="card">
-        <div className="tabs" style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -155,8 +155,8 @@ export default function GovQueueView() {
         {queue.isLoading ? <Loading /> : rows.length === 0 ? (
           <EmptyRow text="Энэ ангилалд хүсэлт байхгүй байна." />
         ) : (
-          <div className="table-wrap" style={{ overflowX: 'auto' }}>
-            <table className="table">
+          <div className="users-table-wrap" style={{ overflowX: 'auto' }}>
+            <table className="users-table">
               <thead>
                 <tr>
                   <th>Лавлах №</th>
@@ -173,7 +173,7 @@ export default function GovQueueView() {
                     <td>
                       <button
                         type="button"
-                        className="btn btn--link"
+                        className="btn btn--ghost"
                         onClick={() => setOpenID(openID === a.id ? null : a.id)}
                       >
                         {a.reference_no}
@@ -239,23 +239,23 @@ function QueueDetail({
     <>
       <h3 style={{ marginTop: 0 }}>{a.service_name}</h3>
 
-      <div className="defrow"><span className="defrow__key">Лавлах №</span><span className="defrow__value">{a.reference_no}</span></div>
-      <div className="defrow"><span className="defrow__key">Төлөв</span><span className="defrow__value"><ApplicationStatus status={a.status} /></span></div>
-      <div className="defrow"><span className="defrow__key">Хугацаа</span><span className="defrow__value"><DueChip dueAt={a.due_at} suspended={a.suspended} /></span></div>
-      {a.note && <div className="defrow"><span className="defrow__key">Иргэний тайлбар</span><span className="defrow__value">{a.note}</span></div>}
-      {a.decision_note && <div className="defrow"><span className="defrow__key">Шийдвэрийн тэмдэглэл</span><span className="defrow__value">{a.decision_note}</span></div>}
+      <div className="defrow"><span className="defrow__label">Лавлах №</span><span className="defrow__value">{a.reference_no}</span></div>
+      <div className="defrow"><span className="defrow__label">Төлөв</span><span className="defrow__value"><ApplicationStatus status={a.status} /></span></div>
+      <div className="defrow"><span className="defrow__label">Хугацаа</span><span className="defrow__value"><DueChip dueAt={a.due_at} suspended={a.suspended} /></span></div>
+      {a.note && <div className="defrow"><span className="defrow__label">Иргэний тайлбар</span><span className="defrow__value">{a.note}</span></div>}
+      {a.decision_note && <div className="defrow"><span className="defrow__label">Шийдвэрийн тэмдэглэл</span><span className="defrow__value">{a.decision_note}</span></div>}
 
       {svc && (
         <>
           <h4 style={{ marginTop: 20 }}><Scale size={15} /> Үйлчилгээний үндэслэл</h4>
-          <div className="defrow"><span className="defrow__key">Код</span><span className="defrow__value">{svc.code}</span></div>
-          <div className="defrow"><span className="defrow__key">COFOG</span><span className="defrow__value">{svc.cofog_code} — {svc.cofog_label}</span></div>
-          {svc.sdg_code && <div className="defrow"><span className="defrow__key">SDG процедур</span><span className="defrow__value">{svc.sdg_code}</span></div>}
-          <div className="defrow"><span className="defrow__key">Гаралт</span><span className="defrow__value">{svc.output_type}</span></div>
-          <div className="defrow"><span className="defrow__key">Эрх зүйн үндэслэл</span><span className="defrow__value">{svc.legal_basis || '—'}</span></div>
+          <div className="defrow"><span className="defrow__label">Код</span><span className="defrow__value">{svc.code}</span></div>
+          <div className="defrow"><span className="defrow__label">COFOG</span><span className="defrow__value">{svc.cofog_code} — {svc.cofog_label}</span></div>
+          {svc.sdg_code && <div className="defrow"><span className="defrow__label">SDG процедур</span><span className="defrow__value">{svc.sdg_code}</span></div>}
+          <div className="defrow"><span className="defrow__label">Гаралт</span><span className="defrow__value">{svc.output_type}</span></div>
+          <div className="defrow"><span className="defrow__label">Эрх зүйн үндэслэл</span><span className="defrow__value">{svc.legal_basis || '—'}</span></div>
           {svc.evidence.length > 0 && (
             <div className="defrow">
-              <span className="defrow__key"><FileText size={14} /> Шаардах баримт</span>
+              <span className="defrow__label"><FileText size={14} /> Шаардах баримт</span>
               <span className="defrow__value">
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   {svc.evidence.map((e) => <li key={e}>{e}</li>)}
@@ -268,7 +268,7 @@ function QueueDetail({
 
       <h4 style={{ marginTop: 20 }}>Явцын түүх</h4>
       {events.length === 0 ? <EmptyRow text="Бичлэг алга." /> : (
-        <ul className="timeline" style={{ margin: 0, paddingLeft: 18 }}>
+        <ul style={{ margin: 0, paddingLeft: 18 }}>
           {events.map((e) => (
             <li key={e.id} style={{ marginBottom: 6 }}>
               <span className="muted" style={{ fontSize: 12 }}>{fmtDateTime(e.created_at)}</span>

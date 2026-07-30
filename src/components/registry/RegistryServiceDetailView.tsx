@@ -268,7 +268,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
               </span>
             </div>
             {!report.data.compliant && (
-              <div className="alert alert--warning" role="status" style={{ marginTop: 12 }}>
+              <div className="alert alert--info" role="status" style={{ marginTop: 12 }}>
                 {T('registry.onceOnly.blockHint')}
               </div>
             )}
@@ -313,7 +313,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
                     <input type="checkbox" checked={e.from_citizen} disabled={busy} onChange={() => toggleLink(e.evidence_id, 'from_citizen')} />
                     {T('registry.evidence.fromCitizen')}
                   </label>
-                  {e.in_khur && <span className="chip chip--primary" style={{ fontSize: 11 }}>{T('registry.evidence.inKhur')}</span>}
+                  {e.in_khur && <span className="chip chip--neutral" style={{ fontSize: 11 }}>{T('registry.evidence.inKhur')}</span>}
                   <button className="btn btn--ghost btn--sm" onClick={() => removeLink(e.evidence_id)} disabled={busy} aria-label={T('registry.action.delete')}>
                     <Trash2 size={14} />
                   </button>
