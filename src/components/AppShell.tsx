@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -21,7 +21,7 @@ import { useT } from '../lib/lang';
 import type { DictKey } from '../lib/i18n';
 import { displayName, isAdminLevel, isSuperAdmin } from '../lib/types';
 import { initialsOf } from '../lib/format';
-import { useBrandName, useDocsUrl, useHelpUrl } from '../config';
+import { useBrandName, useDocsUrl, useHelpUrl, useNavConfig } from '../config';
 
 export interface AppUser {
   username: string;
@@ -171,6 +171,10 @@ const SYSTEMS: NavSystem[] = [
         labelKey: 'group.govServices',
         items: [
           { href: '/me/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+          // Иргэний хэтэвч — eID дээр суурилсан IBAN данс. Хэтэвчийн платформ
+          // л үйлчилдэг; бусад дээр `navRoutes` шүүлтээр гарахгүй (gateway,
+          // relay, бүртгэлийн модультой ижил зарчим).
+          { href: '/me/wallet', labelKey: 'nav.wallet', icon: Wallet },
           { href: '/me/services', labelKey: 'nav.govServices', icon: Landmark },
           { href: '/me/applications', labelKey: 'nav.govApplications', icon: Inbox },
           { href: '/me/references', labelKey: 'nav.govReferences', icon: FileCheck },
@@ -232,11 +236,31 @@ export default function AppShell({ user, children }: Props) {
     if (i.superAdminOnly) return isSuper;
     return !i.perm || isAdmin || (perms?.includes(i.perm) ?? false);
   };
+
+  // Цэсний бүтэц нь ФЛОТЫНХ, харин аль хэсгийг нь үйлчилдэг нь ПЛАТФОРМЫНХ.
+  // `navRoutes` өгөөгүй бол шүүхгүй — бүх модулиа хэрэгжүүлсэн платформ (template,
+  // sso) юу ч тохируулахгүй, өмнөх зан ажиллагаа хэвээр.
+  const { navRoutes, navSystemLabels } = useNavConfig();
+  const served = (href: string) =>
+    !navRoutes ||
+    navRoutes.some((r) => href === r || href.startsWith(r.endsWith('/') ? r : r + '/'));
+
+  // Rail-ийн нэрийг платформ дарж бичсэн бол сольно (хэтэвчид «Иргэн» биш
+  // «Түрийвч»). Зөвхөн ЭНГИЙН УТГА — server→client хилээр дүрс дамжихгүй тул
+  // цэсний бүтэц бүхэлдээ энд байрлаж, платформ `navRoutes`-оор шүүнэ.
+  const nav = useMemo(
+    () =>
+      navSystemLabels
+        ? SYSTEMS.map((s) => (navSystemLabels[s.key] ? { ...s, labelKey: navSystemLabels[s.key] } : s))
+        : SYSTEMS,
+    [navSystemLabels],
+  );
+
   const visibleSubsystems = (s: NavSystem) =>
     s.subsystems
-      .map((g) => ({ ...g, items: g.items.filter(canSeeItem) }))
+      .map((g) => ({ ...g, items: g.items.filter((i) => served(i.href) && canSeeItem(i)) }))
       .filter((g) => g.items.length > 0);
-  const systems = SYSTEMS.filter((s) => {
+  const systems = nav.filter((s) => {
     if (s.superAdminOnly && !isSuper) return false;
     // Super admin нэвтэрсэн бол ЗӨВХӨН Super Admin системийг харуулна — бусад бүх
     // системийг (Admin/Manager/Хэрэглэгч) нууна. (Профайл/гарах нь баруун дээд

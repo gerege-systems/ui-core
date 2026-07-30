@@ -21,7 +21,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
-import type { Lang } from './lib/i18n';
+import type { DictKey, Lang } from './lib/i18n';
 import type { LandingCopy } from './types';
 
 export interface UiCoreConfig {
@@ -52,7 +52,34 @@ export interface UiCoreConfig {
    * дөрвөн хэлтэй сайт `['mn','en','zh','ru']` гэж өгнө.
    */
   docsLangs?: readonly string[];
+  /**
+   * Апп ҮНЭХЭЭР үйлчилдэг хуудсууд — зүүн цэс үүгээр шүүгдэнэ.
+   *
+   * Цэсний бүтэц багцад байдаг ч платформ бүр түүний ДЭД олонлогийг л
+   * хэрэгжүүлдэг: хэтэвч нь gateway, бүртгэлийн модульгүй. Өгөөгүй бол
+   * шүүлт хийхгүй (бүх зүйл харагдана) — бүх модулиа хэрэгжүүлсэн платформ
+   * (template, sso) юу ч тохируулах шаардлагагүй.
+   *
+   * Яг тэнцүү эсвэл сегментийн зааг дээрх угтвар л таарна: '/me/eid' нь
+   * '/me/eid/id'-г нээнэ, '/me/eidfoo'-г нээхгүй.
+   */
+  navRoutes?: readonly string[];
+  /**
+   * ЗӨВХӨН ЭНГИЙН УТГА: `UiCoreProvider` нь server root layout-аас дуудагддаг
+   * client компонент тул түүнд дамжих бүх проп сериалчлагдах ёстой. Цэсний
+   * зүйлийг дүрс (React component) хамт дамжуулах боломжгүй — иймд цэсний
+   * БҮТЭЦ багцад бүрэн байрлаж, платформ нь `navRoutes`-оор л шүүнэ.
+   */
+
+  /**
+   * Rail дээрх системийн нэрийг дарж бичих (`'me'` → `'sys.wallet'` г.м.).
+   *
+   * Ижил бүтэцтэй ч платформ өөрөө нэрлэдэг: template-д «Хэрэглэгч», хэтэвчид
+   * «Хэтэвч».
+   */
+  navSystemLabels?: Readonly<Record<string, DictKey>>;
 }
+
 
 const DEFAULT_DOCS_LANGS = ['mn', 'en'] as const;
 
@@ -70,6 +97,8 @@ export function UiCoreProvider({
   docsUrl,
   helpUrl,
   docsLangs,
+  navRoutes,
+  navSystemLabels,
   children,
 }: Partial<UiCoreConfig> & { children: React.ReactNode }) {
   const parent = useContext(Ctx);
@@ -80,10 +109,12 @@ export function UiCoreProvider({
       docsUrl: docsUrl ?? parent.docsUrl,
       helpUrl: helpUrl ?? parent.helpUrl,
       docsLangs: docsLangs ?? parent.docsLangs,
+      navRoutes: navRoutes ?? parent.navRoutes,
+      navSystemLabels: navSystemLabels ?? parent.navSystemLabels,
     }),
-    [brandName, landingCopy, docsUrl, helpUrl, docsLangs,
+    [brandName, landingCopy, docsUrl, helpUrl, docsLangs, navRoutes, navSystemLabels,
      parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl,
-     parent.docsLangs],
+     parent.docsLangs, parent.navRoutes, parent.navSystemLabels],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -130,4 +161,10 @@ export function useDocsUrl(lang: string): string | null {
 /** Тусламжийн хуудас. Өгөөгүй бол флотын анхдагч. */
 export function useHelpUrl(): string {
   return useContext(Ctx).helpUrl ?? 'https://dgov.mn/help';
+}
+
+/** Цэсний тохиргоо — AppShell дуудна. */
+export function useNavConfig(): Pick<UiCoreConfig, 'navRoutes' | 'navSystemLabels'> {
+  const c = useContext(Ctx);
+  return { navRoutes: c.navRoutes, navSystemLabels: c.navSystemLabels };
 }
