@@ -28,7 +28,14 @@ export interface UiCoreConfig {
   /** Брэндийн нэр — толгой мөр, хөл хэсэг, logo-ийн alt текст. */
   brandName: string;
   /** Багцлагдсан landing текстийн суурь утга (ThemeEditor-т л хэрэгтэй). */
-  landingCopy?: Record<Lang, LandingCopy>;
+  /**
+   * Багцлагдсан landing текстийн суурь утга (ThemeEditor-т л хэрэгтэй).
+   *
+   * ХЭСЭГЧЛЭН: landing текст нь платформын өмч бөгөөд ихэвчлэн интерфэйсээс
+   * ЦӨӨН хэлтэй байдаг (маркетингийн текст орчуулах нь тусдаа ажил). Иймд
+   * долоон хэлийг бүгдийг шаардахгүй — байхгүй хэлийг ThemeEditor алгасана.
+   */
+  landingCopy?: Partial<Record<Lang, LandingCopy>>;
   /**
    * Баримтын сайтын хаяг (`brand.config.ts`-ийн `docsUrl`). Өгвөл хэрэглэгчийн
    * цэсэнд «Баримт бичиг» холбоос гарна; өгөөгүй бол огт харагдахгүй.
@@ -90,7 +97,7 @@ export function useBrandName(): string {
  * Landing текстийн суурь утга. Өгөөгүй бол ойлгомжтой алдаа шиднэ — чимээгүй
  * хоосон preview харуулахаас дээр.
  */
-export function useLandingCopy(): Record<Lang, LandingCopy> {
+export function useLandingCopy(): Partial<Record<Lang, LandingCopy>> {
   const copy = useContext(Ctx).landingCopy;
   if (!copy) {
     throw new Error(
