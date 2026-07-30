@@ -132,7 +132,7 @@ export default function RegistryEvidencesView() {
                 </span>
                 <span className="defrow__value" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   {e.in_khur && (
-                    <span className="chip chip--primary mono" style={{ fontSize: 11 }} title={T('registry.evidence.khurCode')}>
+                    <span className="chip chip--neutral mono" style={{ fontSize: 11 }} title={T('registry.evidence.khurCode')}>
                       <Link2 size={12} style={{ verticalAlign: '-2px' }} /> {e.khur_service_code}
                     </span>
                   )}

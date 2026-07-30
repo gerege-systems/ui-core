@@ -143,7 +143,7 @@ export default function RegistryOverviewView() {
                 <span className="defrow__value" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   {/* Засварын шууд заавар: иргэний цаасыг орлох ХУР лавлагаа. */}
                   <span className="muted" style={{ fontSize: 12 }}>{T('registry.onceOnly.replaceWith')}</span>
-                  <span className="chip chip--primary mono" style={{ fontSize: 11 }}>{v.khur_service_code}</span>
+                  <span className="chip chip--neutral mono" style={{ fontSize: 11 }}>{v.khur_service_code}</span>
                   <span className="chip chip--neutral" title={T('registry.kpi.annualHits')}>
                     {fmtNum(v.annual_volume)}/{T('registry.units.year')}
                   </span>

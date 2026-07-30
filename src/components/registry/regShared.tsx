@@ -46,7 +46,7 @@ export function StatCard({
 /** Паспортын статусын chip. */
 export function StatusChip({ status, labels }: { status: RegistryStatus; labels: Record<string, string> }) {
   const klass =
-    status === 'published' ? 'chip--success' : status === 'archived' ? 'chip--neutral' : 'chip--warning';
+    status === 'published' ? 'chip--success' : status === 'archived' ? 'chip--neutral' : 'chip--pending';
   return <span className={`chip ${klass}`}>{labels[status] ?? status}</span>;
 }
 
@@ -65,10 +65,10 @@ export function ProactivityChip({
     level === 'proactive'
       ? 'chip--success'
       : level === 'once_only'
-        ? 'chip--primary'
+        ? 'chip--admin'
         : level === 'online'
           ? 'chip--neutral'
-          : 'chip--warning';
+          : 'chip--pending';
   return <span className={`chip ${klass}`}>{labels[level] ?? level}</span>;
 }
 
