@@ -8,5 +8,5 @@
 //     import { api }  from '@gerege/ui-core/lib/api';
 
 export { UiCoreProvider, useBrandName, useLandingCopy } from './config';
-export type { UiCoreConfig } from './config';
+export type { UiCoreConfig, NavExtra } from './config';
 export type { LandingCopy } from './types';
