@@ -65,11 +65,34 @@ export interface UiCoreConfig {
    */
   navRoutes?: readonly string[];
   /**
-   * ЗӨВХӨН ЭНГИЙН УТГА: `UiCoreProvider` нь server root layout-аас дуудагддаг
-   * client компонент тул түүнд дамжих бүх проп сериалчлагдах ёстой. Цэсний
-   * зүйлийг дүрс (React component) хамт дамжуулах боломжгүй — иймд цэсний
-   * БҮТЭЦ багцад бүрэн байрлаж, платформ нь `navRoutes`-оор л шүүнэ.
+   * Зөвхөн ЭНЭ платформд байдаг цэсний зүйл (ring-ийн BPM модулиуд г.м.).
+   *
+   * ⚠️ **CLIENT компонентоос дамжуулна.** `icon` нь React component, `label`
+   * нь функц тул server→client хилээр гарахгүй (React шууд алдаа өгнө).
+   * Root layout нь server component байдаг учир апп өөрийн нимгэн client
+   * бүрхүүл үүсгэж, түүн дотроос дамжуулна:
+   *
+   * ```tsx
+   * // src/nav.config.tsx
+   * 'use client';
+   * import { Workflow } from 'lucide-react';
+   * import { UiCoreProvider } from '@gerege/ui-core';
+   *
+   * const NAV_EXTRA = [{ system: 'admin', subsystem: 'group.bpm',
+   *   href: '/admin/workflow', icon: Workflow, label: (l) => ringT(l, 'nav.wf') }];
+   *
+   * export default function AppNav({ children }) {
+   *   return <UiCoreProvider navExtra={NAV_EXTRA}>{children}</UiCoreProvider>;
+   * }
+   * ```
+   *
+   * Provider-ууд үүрлэж болдог тул root layout нь `brandName` г.м.-ээ өгөөд,
+   * энэ бүрхүүл зөвхөн `navExtra`-г нэмнэ.
+   *
+   * Цөөн зүйл нэмэхэд багцын цэсэнд `optIn: true`-тэй оруулах нь ч болно
+   * (`/me/wallet` шиг) — тэр нь дундын нэр томьёо байвал илүү зохимжтой.
    */
+  navExtra?: readonly NavExtra[];
 
   /**
    * Rail дээрх системийн нэрийг дарж бичих (`'me'` → `'sys.wallet'` г.м.).
@@ -98,6 +121,7 @@ export function UiCoreProvider({
   helpUrl,
   docsLangs,
   navRoutes,
+  navExtra,
   navSystemLabels,
   children,
 }: Partial<UiCoreConfig> & { children: React.ReactNode }) {
@@ -110,11 +134,13 @@ export function UiCoreProvider({
       helpUrl: helpUrl ?? parent.helpUrl,
       docsLangs: docsLangs ?? parent.docsLangs,
       navRoutes: navRoutes ?? parent.navRoutes,
+      navExtra: navExtra ?? parent.navExtra,
       navSystemLabels: navSystemLabels ?? parent.navSystemLabels,
     }),
-    [brandName, landingCopy, docsUrl, helpUrl, docsLangs, navRoutes, navSystemLabels,
+    [brandName, landingCopy, docsUrl, helpUrl, docsLangs, navRoutes, navExtra,
+     navSystemLabels,
      parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl,
-     parent.docsLangs, parent.navRoutes, parent.navSystemLabels],
+     parent.docsLangs, parent.navRoutes, parent.navExtra, parent.navSystemLabels],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -162,9 +188,42 @@ export function useDocsUrl(lang: string): string | null {
 export function useHelpUrl(): string {
   return useContext(Ctx).helpUrl ?? 'https://dgov.mn/help';
 }
+/**
+ * Платформын өөрийн цэсний зүйл.
+ *
+ * Нэрийг ХОЁР аргаар өгч болно:
+ *   `labelKey` — дундын толийн түлхүүр (`@gerege/ui-core/lib/i18n`);
+ *   `label`    — аппын өөрийн толиос шийдэх функц (BPM г.м. нэр томьёо
+ *                дундын толинд байх ёсгүй — тэр нь бүх платформыг үүрүүлнэ).
+ * Хоёулаа өгвөл `label` давамгайлна.
+ */
+interface NavExtraBase {
+  /** Аль систем (rail) — 'superadmin' | 'admin' | 'manager' | 'me'. */
+  system: string;
+  /** Аль дэд бүлэг. Тэр нэртэй бүлэг байхгүй бол шинээр эхэнд үүснэ. */
+  subsystem: DictKey;
+  /** Шинэ дэд бүлэг үүсэх үед түүний нэрийг аппын толиос авах бол. */
+  subsystemLabel?: (lang: string) => string;
+  /** Энэ href-ийн ӨМНӨ оруулна. Өгөөгүй/олдоогүй бол бүлгийн төгсгөлд. */
+  before?: string;
+  href: string;
+  /** lucide-react дүрс. */
+  icon: React.ComponentType<{ size?: number | string; strokeWidth?: number }>;
+  /** Шаардагдах эрх; өгөөгүй бол бүх нэвтэрсэн хэрэглэгчид. */
+  perm?: string;
+  superAdminOnly?: boolean;
+}
+
+// Нэрийг ЗААВАЛ нэг аргаар өгнө — хоёулааг мартвал хөрвүүлэлтийн үед барина
+// (эс бөгөөс цэс хоосон шошготой зурагдана).
+export type NavExtra = NavExtraBase &
+  (
+    | { labelKey: DictKey; label?: never }
+    | { label: (lang: string) => string; labelKey?: never }
+  );
 
 /** Цэсний тохиргоо — AppShell дуудна. */
-export function useNavConfig(): Pick<UiCoreConfig, 'navRoutes' | 'navSystemLabels'> {
+export function useNavConfig(): Pick<UiCoreConfig, 'navRoutes' | 'navExtra' | 'navSystemLabels'> {
   const c = useContext(Ctx);
-  return { navRoutes: c.navRoutes, navSystemLabels: c.navSystemLabels };
+  return { navRoutes: c.navRoutes, navExtra: c.navExtra, navSystemLabels: c.navSystemLabels };
 }

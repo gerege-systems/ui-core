@@ -52,11 +52,18 @@ interface NavItem {
    * бичсэн платформ дээр л гарна.
    */
   optIn?: boolean;
+  /**
+   * Аппын өөрийн толиос нэрийг шийднэ (`navExtra`-аар ирсэн зүйлд).
+   * Өгвөл `labelKey`-г үл тоомсорлоно.
+   */
+  label?: (lang: string) => string;
 }
 // Дэд систем (subsystem) = систем доторх нэрлэсэн бүлэг — зүүн цэсийн ДУНД түвшин.
 // Систем бүр ДОР ХАЯЖ 1 дэд системтэй тул labelKey ЗААВАЛ (нэргүй бүлэг байхгүй).
 interface NavSubsystem {
   labelKey: DictKey;
+  /** Аппын өөрийн толиос шийдэх (`navExtra`-аар үүссэн бүлэгт). */
+  label?: (lang: string) => string;
   items: NavItem[];
 }
 // Систем = icon rail дахь дээд түвшин (Супер админ / Админ / Менежер / Иргэн).
@@ -227,6 +234,9 @@ export default function AppShell({ user, children }: Props) {
   const { T, lang } = useT();
   const docsHref = useDocsUrl(lang);
   const helpHref = useHelpUrl();
+  // Цэсний нэр: аппын өөрийн толь (navExtra.label) давамгайлж, эс бөгөөс дундын.
+  const navLabel = (i: { labelKey: DictKey; label?: (lang: string) => string }) =>
+    i.label ? i.label(lang) : T(i.labelKey);
   const isAdmin = isAdminLevel(user.roleId); // super admin + admin
   const isSuper = isSuperAdmin(user.roleId);
 
@@ -248,21 +258,44 @@ export default function AppShell({ user, children }: Props) {
   // Цэсний бүтэц нь ФЛОТЫНХ, харин аль хэсгийг нь үйлчилдэг нь ПЛАТФОРМЫНХ.
   // `navRoutes` өгөөгүй бол шүүхгүй — бүх модулиа хэрэгжүүлсэн платформ (template,
   // sso) юу ч тохируулахгүй, өмнөх зан ажиллагаа хэвээр.
-  const { navRoutes, navSystemLabels } = useNavConfig();
+  const { navRoutes, navExtra, navSystemLabels } = useNavConfig();
   const listed = (href: string) =>
     (navRoutes ?? []).some((r) => href === r || href.startsWith(r.endsWith('/') ? r : r + '/'));
   const served = (i: NavItem) => (i.optIn ? listed(i.href) : !navRoutes || listed(i.href));
 
-  // Rail-ийн нэрийг платформ дарж бичсэн бол сольно (хэтэвчид «Иргэн» биш
-  // «Түрийвч»). Зөвхөн ЭНГИЙН УТГА — server→client хилээр дүрс дамжихгүй тул
-  // цэсний бүтэц бүхэлдээ энд байрлаж, платформ `navRoutes`-оор шүүнэ.
-  const nav = useMemo(
-    () =>
-      navSystemLabels
-        ? SYSTEMS.map((s) => (navSystemLabels[s.key] ? { ...s, labelKey: navSystemLabels[s.key] } : s))
-        : SYSTEMS,
-    [navSystemLabels],
-  );
+  // Платформын өөрийн цэсийг зохих бүлэгт нь оруулаад, rail-ийн нэрийг дарж
+  // бичсэн бол сольно (хэтэвчид «Иргэн» биш «Түрийвч»).
+  const nav = useMemo(() => {
+    const withExtras = !navExtra?.length
+      ? SYSTEMS
+      : SYSTEMS.map((sys) => {
+          const mine = navExtra.filter((e) => e.system === sys.key);
+          if (!mine.length) return sys;
+          let subsystems = sys.subsystems.map((g) => ({ ...g, items: [...g.items] }));
+          for (const e of mine) {
+            const item: NavItem = {
+              href: e.href,
+              labelKey: (e.labelKey ?? '') as DictKey,
+              label: e.label,
+              icon: e.icon as NavItem['icon'],
+              perm: e.perm,
+              superAdminOnly: e.superAdminOnly,
+            };
+            let g = subsystems.find((x) => x.labelKey === e.subsystem);
+            if (!g) {
+              g = { labelKey: e.subsystem, label: e.subsystemLabel, items: [] };
+              subsystems = [g, ...subsystems];
+            }
+            const at = e.before ? g.items.findIndex((i) => i.href === e.before) : -1;
+            if (at >= 0) g.items.splice(at, 0, item);
+            else g.items.push(item);
+          }
+          return { ...sys, subsystems };
+        });
+    return navSystemLabels
+      ? withExtras.map((s) => (navSystemLabels[s.key] ? { ...s, labelKey: navSystemLabels[s.key] } : s))
+      : withExtras;
+  }, [navExtra, navSystemLabels]);
 
   const visibleSubsystems = (s: NavSystem) =>
     s.subsystems
@@ -282,7 +315,7 @@ export default function AppShell({ user, children }: Props) {
   // dropdown-д байдаг Профайл/Тохиргоо. Бичихэд шүүж, сонгоход шилжинэ.
   const searchItems: SearchItem[] = [
     ...systems.flatMap((s) =>
-      visibleSubsystems(s).flatMap((g) => g.items.map((i) => ({ label: T(i.labelKey), href: i.href, group: T(s.labelKey) }))),
+      visibleSubsystems(s).flatMap((g) => g.items.map((i) => ({ label: navLabel(i), href: i.href, group: T(s.labelKey) }))),
     ),
     { label: T('nav.profile'), href: '/me/profile', group: T('sys.user') },
     { label: T('nav.settings'), href: '/me/settings', group: T('sys.user') },
@@ -412,7 +445,7 @@ export default function AppShell({ user, children }: Props) {
                 aria-expanded={open}
                 onClick={() => setOpenSub(open ? '' : g.labelKey)}
               >
-                <span className="sidepanel__group-label">{T(g.labelKey)}</span>
+                <span className="sidepanel__group-label">{navLabel(g as { labelKey: DictKey; label?: (l: string) => string })}</span>
                 <ChevronDown size={15} strokeWidth={2.5} className="sidepanel__chev" />
               </button>
               {open && <div className="sidepanel__group-items">
@@ -428,7 +461,7 @@ export default function AppShell({ user, children }: Props) {
                     onClick={closeMobileNav}
                   >
                     <Icon size={16} strokeWidth={2} />
-                    <span>{T(item.labelKey)}</span>
+                    <span>{navLabel(item)}</span>
                   </Link>
                 );
               })}
