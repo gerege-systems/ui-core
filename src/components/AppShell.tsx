@@ -283,7 +283,7 @@ export default function AppShell({ user, children }: Props) {
             };
             let g = subsystems.find((x) => x.labelKey === e.subsystem);
             if (!g) {
-              g = { labelKey: e.subsystem, label: e.subsystemLabel, items: [] };
+              g = { labelKey: e.subsystem as DictKey, label: e.subsystemLabel, items: [] };
               subsystems = [g, ...subsystems];
             }
             const at = e.before ? g.items.findIndex((i) => i.href === e.before) : -1;
