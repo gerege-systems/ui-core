@@ -65,11 +65,12 @@ export interface UiCoreConfig {
    */
   navRoutes?: readonly string[];
   /**
-   * Зөвхөн ЭНЭ платформд байдаг цэсний зүйл (жишээ нь хэтэвчийн `/me/wallet`).
-   *
-   * Багцын цэсэнд оруулбал бусад платформ дээр үхсэн холбоос болно.
+   * ЗӨВХӨН ЭНГИЙН УТГА: `UiCoreProvider` нь server root layout-аас дуудагддаг
+   * client компонент тул түүнд дамжих бүх проп сериалчлагдах ёстой. Цэсний
+   * зүйлийг дүрс (React component) хамт дамжуулах боломжгүй — иймд цэсний
+   * БҮТЭЦ багцад бүрэн байрлаж, платформ нь `navRoutes`-оор л шүүнэ.
    */
-  navExtra?: readonly NavExtra[];
+
   /**
    * Rail дээрх системийн нэрийг дарж бичих (`'me'` → `'sys.wallet'` г.м.).
    *
@@ -79,22 +80,6 @@ export interface UiCoreConfig {
   navSystemLabels?: Readonly<Record<string, DictKey>>;
 }
 
-/** Платформын өөрийн цэсний зүйлийг хаана байрлуулах вэ. */
-export interface NavExtra {
-  /** Аль систем (rail) — 'superadmin' | 'admin' | 'manager' | 'me'. */
-  system: string;
-  /** Аль дэд бүлэг. Тэр нэртэй бүлэг байхгүй бол шинээр эхэнд үүснэ. */
-  subsystem: DictKey;
-  /** Энэ href-ийн ӨМНӨ оруулна. Өгөөгүй/олдоогүй бол бүлгийн төгсгөлд. */
-  before?: string;
-  href: string;
-  labelKey: DictKey;
-  /** lucide-react дүрс. */
-  icon: React.ComponentType<{ size?: number | string; strokeWidth?: number }>;
-  /** Шаардагдах эрх; өгөөгүй бол бүх нэвтэрсэн хэрэглэгчид. */
-  perm?: string;
-  superAdminOnly?: boolean;
-}
 
 const DEFAULT_DOCS_LANGS = ['mn', 'en'] as const;
 
@@ -113,7 +98,6 @@ export function UiCoreProvider({
   helpUrl,
   docsLangs,
   navRoutes,
-  navExtra,
   navSystemLabels,
   children,
 }: Partial<UiCoreConfig> & { children: React.ReactNode }) {
@@ -126,13 +110,11 @@ export function UiCoreProvider({
       helpUrl: helpUrl ?? parent.helpUrl,
       docsLangs: docsLangs ?? parent.docsLangs,
       navRoutes: navRoutes ?? parent.navRoutes,
-      navExtra: navExtra ?? parent.navExtra,
       navSystemLabels: navSystemLabels ?? parent.navSystemLabels,
     }),
-    [brandName, landingCopy, docsUrl, helpUrl, docsLangs, navRoutes, navExtra,
-     navSystemLabels,
+    [brandName, landingCopy, docsUrl, helpUrl, docsLangs, navRoutes, navSystemLabels,
      parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl,
-     parent.docsLangs, parent.navRoutes, parent.navExtra, parent.navSystemLabels],
+     parent.docsLangs, parent.navRoutes, parent.navSystemLabels],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -182,7 +164,7 @@ export function useHelpUrl(): string {
 }
 
 /** Цэсний тохиргоо — AppShell дуудна. */
-export function useNavConfig(): Pick<UiCoreConfig, 'navRoutes' | 'navExtra' | 'navSystemLabels'> {
+export function useNavConfig(): Pick<UiCoreConfig, 'navRoutes' | 'navSystemLabels'> {
   const c = useContext(Ctx);
-  return { navRoutes: c.navRoutes, navExtra: c.navExtra, navSystemLabels: c.navSystemLabels };
+  return { navRoutes: c.navRoutes, navSystemLabels: c.navSystemLabels };
 }

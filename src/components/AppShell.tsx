@@ -171,6 +171,10 @@ const SYSTEMS: NavSystem[] = [
         labelKey: 'group.govServices',
         items: [
           { href: '/me/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+          // Иргэний хэтэвч — eID дээр суурилсан IBAN данс. Хэтэвчийн платформ
+          // л үйлчилдэг; бусад дээр `navRoutes` шүүлтээр гарахгүй (gateway,
+          // relay, бүртгэлийн модультой ижил зарчим).
+          { href: '/me/wallet', labelKey: 'nav.wallet', icon: Wallet },
           { href: '/me/services', labelKey: 'nav.govServices', icon: Landmark },
           { href: '/me/applications', labelKey: 'nav.govApplications', icon: Inbox },
           { href: '/me/references', labelKey: 'nav.govReferences', icon: FileCheck },
@@ -236,34 +240,21 @@ export default function AppShell({ user, children }: Props) {
   // Цэсний бүтэц нь ФЛОТЫНХ, харин аль хэсгийг нь үйлчилдэг нь ПЛАТФОРМЫНХ.
   // `navRoutes` өгөөгүй бол шүүхгүй — бүх модулиа хэрэгжүүлсэн платформ (template,
   // sso) юу ч тохируулахгүй, өмнөх зан ажиллагаа хэвээр.
-  const { navRoutes, navExtra, navSystemLabels } = useNavConfig();
+  const { navRoutes, navSystemLabels } = useNavConfig();
   const served = (href: string) =>
     !navRoutes ||
     navRoutes.some((r) => href === r || href.startsWith(r.endsWith('/') ? r : r + '/'));
 
-  const nav = useMemo(() => {
-    // 1) Платформын өөрийн зүйлсийг зохих бүлэгт нь оруулна.
-    const withExtras = SYSTEMS.map((s) => {
-      const mine = (navExtra ?? []).filter((e) => e.system === s.key);
-      if (!mine.length) return s;
-      let subsystems = s.subsystems.map((g) => ({ ...g, items: [...g.items] }));
-      for (const e of mine) {
-        const item: NavItem = {
-          href: e.href, labelKey: e.labelKey, icon: e.icon as NavItem['icon'],
-          perm: e.perm, superAdminOnly: e.superAdminOnly,
-        };
-        let g = subsystems.find((x) => x.labelKey === e.subsystem);
-        if (!g) { g = { labelKey: e.subsystem, items: [] }; subsystems = [g, ...subsystems]; }
-        const at = e.before ? g.items.findIndex((i) => i.href === e.before) : -1;
-        if (at >= 0) g.items.splice(at, 0, item); else g.items.push(item);
-      }
-      return { ...s, subsystems };
-    });
-    // 2) Rail-ийн нэрийг платформ дарж бичсэн бол сольно.
-    return navSystemLabels
-      ? withExtras.map((s) => (navSystemLabels[s.key] ? { ...s, labelKey: navSystemLabels[s.key] } : s))
-      : withExtras;
-  }, [navExtra, navSystemLabels]);
+  // Rail-ийн нэрийг платформ дарж бичсэн бол сольно (хэтэвчид «Иргэн» биш
+  // «Түрийвч»). Зөвхөн ЭНГИЙН УТГА — server→client хилээр дүрс дамжихгүй тул
+  // цэсний бүтэц бүхэлдээ энд байрлаж, платформ `navRoutes`-оор шүүнэ.
+  const nav = useMemo(
+    () =>
+      navSystemLabels
+        ? SYSTEMS.map((s) => (navSystemLabels[s.key] ? { ...s, labelKey: navSystemLabels[s.key] } : s))
+        : SYSTEMS,
+    [navSystemLabels],
+  );
 
   const visibleSubsystems = (s: NavSystem) =>
     s.subsystems
