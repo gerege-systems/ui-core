@@ -216,7 +216,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
       <section className="card">
         <div className="card__head">
           <div className="card__title">
-            <FileText size={18} style={{ color: 'var(--gerege-blue-text)' }} />
+            <FileText size={18} style={{ color: 'var(--dan-blue-text)' }} />
             <h2>{s.name}</h2>
           </div>
           <span style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -280,7 +280,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
       <section className="card" style={{ marginTop: 16 }}>
         <div className="card__head">
           <div className="card__title">
-            <Paperclip size={18} style={{ color: 'var(--gerege-blue-text)' }} />
+            <Paperclip size={18} style={{ color: 'var(--dan-blue-text)' }} />
             <h2>{T('registry.detail.evidences')}</h2>
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
       <section className="card" style={{ marginTop: 16 }}>
         <div className="card__head">
           <div className="card__title">
-            <FileText size={18} style={{ color: 'var(--gerege-blue-text)' }} />
+            <FileText size={18} style={{ color: 'var(--dan-blue-text)' }} />
             <h2>{T('registry.detail.passport')}</h2>
           </div>
         </div>
@@ -517,7 +517,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
         <section className="card" style={{ marginTop: 16 }}>
           <div className="card__head">
             <div className="card__title">
-              <Send size={18} style={{ color: 'var(--gerege-blue-text)' }} />
+              <Send size={18} style={{ color: 'var(--dan-blue-text)' }} />
               <h2>{T('registry.publish.title')}</h2>
             </div>
           </div>
@@ -540,7 +540,7 @@ export default function RegistryServiceDetailView({ id }: { id: string }) {
       <section className="card" style={{ marginTop: 16 }}>
         <div className="card__head">
           <div className="card__title">
-            <History size={18} style={{ color: 'var(--gerege-blue-text)' }} />
+            <History size={18} style={{ color: 'var(--dan-blue-text)' }} />
             <h2>{T('registry.detail.versions')}</h2>
           </div>
         </div>

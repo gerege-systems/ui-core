@@ -21,7 +21,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
-import type { Lang } from './lib/i18n';
+import type { DictKey, Lang } from './lib/i18n';
 import type { LandingCopy } from './types';
 
 export interface UiCoreConfig {
@@ -52,6 +52,48 @@ export interface UiCoreConfig {
    * дөрвөн хэлтэй сайт `['mn','en','zh','ru']` гэж өгнө.
    */
   docsLangs?: readonly string[];
+  /**
+   * Апп ҮНЭХЭЭР үйлчилдэг хуудсууд — зүүн цэс үүгээр шүүгдэнэ.
+   *
+   * Цэсний бүтэц багцад байдаг ч платформ бүр түүний ДЭД олонлогийг л
+   * хэрэгжүүлдэг: хэтэвч нь gateway, бүртгэлийн модульгүй. Өгөөгүй бол
+   * шүүлт хийхгүй (бүх зүйл харагдана) — бүх модулиа хэрэгжүүлсэн платформ
+   * (template, sso) юу ч тохируулах шаардлагагүй.
+   *
+   * Яг тэнцүү эсвэл сегментийн зааг дээрх угтвар л таарна: '/me/eid' нь
+   * '/me/eid/id'-г нээнэ, '/me/eidfoo'-г нээхгүй.
+   */
+  navRoutes?: readonly string[];
+  /**
+   * Зөвхөн ЭНЭ платформд байдаг цэсний зүйл (жишээ нь хэтэвчийн `/me/wallet`).
+   *
+   * Багцын цэсэнд оруулбал бусад платформ дээр үхсэн холбоос болно.
+   */
+  navExtra?: readonly NavExtra[];
+  /**
+   * Rail дээрх системийн нэрийг дарж бичих (`'me'` → `'sys.wallet'` г.м.).
+   *
+   * Ижил бүтэцтэй ч платформ өөрөө нэрлэдэг: template-д «Хэрэглэгч», хэтэвчид
+   * «Хэтэвч».
+   */
+  navSystemLabels?: Readonly<Record<string, DictKey>>;
+}
+
+/** Платформын өөрийн цэсний зүйлийг хаана байрлуулах вэ. */
+export interface NavExtra {
+  /** Аль систем (rail) — 'superadmin' | 'admin' | 'manager' | 'me'. */
+  system: string;
+  /** Аль дэд бүлэг. Тэр нэртэй бүлэг байхгүй бол шинээр эхэнд үүснэ. */
+  subsystem: DictKey;
+  /** Энэ href-ийн ӨМНӨ оруулна. Өгөөгүй/олдоогүй бол бүлгийн төгсгөлд. */
+  before?: string;
+  href: string;
+  labelKey: DictKey;
+  /** lucide-react дүрс. */
+  icon: React.ComponentType<{ size?: number | string; strokeWidth?: number }>;
+  /** Шаардагдах эрх; өгөөгүй бол бүх нэвтэрсэн хэрэглэгчид. */
+  perm?: string;
+  superAdminOnly?: boolean;
 }
 
 const DEFAULT_DOCS_LANGS = ['mn', 'en'] as const;
@@ -70,6 +112,9 @@ export function UiCoreProvider({
   docsUrl,
   helpUrl,
   docsLangs,
+  navRoutes,
+  navExtra,
+  navSystemLabels,
   children,
 }: Partial<UiCoreConfig> & { children: React.ReactNode }) {
   const parent = useContext(Ctx);
@@ -80,10 +125,14 @@ export function UiCoreProvider({
       docsUrl: docsUrl ?? parent.docsUrl,
       helpUrl: helpUrl ?? parent.helpUrl,
       docsLangs: docsLangs ?? parent.docsLangs,
+      navRoutes: navRoutes ?? parent.navRoutes,
+      navExtra: navExtra ?? parent.navExtra,
+      navSystemLabels: navSystemLabels ?? parent.navSystemLabels,
     }),
-    [brandName, landingCopy, docsUrl, helpUrl, docsLangs,
+    [brandName, landingCopy, docsUrl, helpUrl, docsLangs, navRoutes, navExtra,
+     navSystemLabels,
      parent.brandName, parent.landingCopy, parent.docsUrl, parent.helpUrl,
-     parent.docsLangs],
+     parent.docsLangs, parent.navRoutes, parent.navExtra, parent.navSystemLabels],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -130,4 +179,10 @@ export function useDocsUrl(lang: string): string | null {
 /** Тусламжийн хуудас. Өгөөгүй бол флотын анхдагч. */
 export function useHelpUrl(): string {
   return useContext(Ctx).helpUrl ?? 'https://dgov.mn/help';
+}
+
+/** Цэсний тохиргоо — AppShell дуудна. */
+export function useNavConfig(): Pick<UiCoreConfig, 'navRoutes' | 'navExtra' | 'navSystemLabels'> {
+  const c = useContext(Ctx);
+  return { navRoutes: c.navRoutes, navExtra: c.navExtra, navSystemLabels: c.navSystemLabels };
 }
