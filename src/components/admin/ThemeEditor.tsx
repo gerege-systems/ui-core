@@ -16,7 +16,7 @@ import {
   type ThemeColors,
   type ThemeConfig,
 } from '../../lib/theme';
-import { pickLang, type Lang } from '../../lib/i18n';
+import { pickLang, LANGS, LANG_LABELS, type Lang } from '../../lib/i18n';
 import { useBrandName, useLandingCopy } from '../../config';
 
 
@@ -67,7 +67,14 @@ export default function ThemeEditor({ theme, onDone }: Props) {
   const [landing, setLanding] = useState<NonNullable<ThemeConfig['landing']>>(
     () => theme?.config?.landing ?? {},
   );
-  const [editLang, setEditLang] = useState<Lang>('mn');
+  // Засварлаж БОЛОХ хэлүүд = аппын landing текст бодитоор агуулсан хэлүүд.
+  // Landing текст нь платформын өмч тул интерфэйсээс цөөн хэлтэй байж болно —
+  // байхгүй хэлийг сонгуулбал editor хоосон талбар үзүүлнэ.
+  const editLangs = useMemo<Lang[]>(
+    () => LANGS.filter((l): l is Lang => landingCopy[l] !== undefined),
+    [landingCopy],
+  );
+  const [editLang, setEditLang] = useState<Lang>(() => editLangs[0] ?? 'mn');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -85,7 +92,7 @@ export default function ThemeEditor({ theme, onDone }: Props) {
 
   // preview-д харуулах нэгдсэн (merge хийсэн) текст.
   const mergedCopy = useMemo<LandingCopy>(
-    () => deepMerge(landingCopy[editLang], landing[editLang] ?? {}),
+    () => deepMerge(landingCopy[editLang] ?? ({} as LandingCopy), landing[editLang] ?? {}),
     [landing, editLang, landingCopy],
   );
 
@@ -180,10 +187,9 @@ export default function ThemeEditor({ theme, onDone }: Props) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
               <h3>{T('themes.content')}</h3>
               <SegmentedControl ariaLabel="lang" value={editLang} onChange={setEditLang}
-                options={[{ value: 'mn', label: 'МН' }, { value: 'en', label: 'EN' },
-                          { value: 'zh', label: '中文' }, { value: 'ru', label: 'RU' }]} />
+                options={editLangs.map((l) => ({ value: l, label: LANG_LABELS[l] }))} />
             </div>
-            <CopyFields def={landingCopy[editLang] as unknown as Json}
+            <CopyFields def={(landingCopy[editLang] ?? {}) as unknown as Json}
               override={(landing[editLang] ?? {}) as Json}
               path={[]} onSet={setLandingPath} />
           </div>
