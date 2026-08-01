@@ -24,6 +24,32 @@ interface OrgRep {
   right_type?: string;
 }
 
+// Байршуулах дээд хэмжээ — backend-ийн UploadBodyMaxBytes (26 MiB) болон
+// edge nginx-ийн client_max_body_size-тай нийцнэ. Хэрэглэгчийг сүлжээгээр
+// дэмий 25 MB явуулаад 413 авахаас сэргийлж browser дээр урьдчилж хаана.
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+// Хариуг JSON гэж БОДОЛГҮЙ уншина. Edge proxy (nginx) 413/502/504 үед өөрийн
+// HTML хуудсаа буцаадаг тул r.json() шууд дуудвал хэрэглэгч түүхий
+// «Unexpected token '<'» SyntaxError хардаг байсан.
+async function readJSON(r: Response): Promise<Record<string, unknown> | null> {
+  const text = await r.text();
+  try {
+    return text ? (JSON.parse(text) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+// JSON биш (эсвэл мессежгүй) алдааны хариуг status-аар нь ойлгомжтой болгоно.
+function httpErrorMsg(status: number): string {
+  if (status === 413) return 'Файл хэт том байна — дээд тал нь 25 MB.';
+  if (status === 401 || status === 403) return 'Нэвтрэлт дууссан байна. Дахин нэвтэрнэ үү.';
+  if (status === 429) return 'Хэт олон хүсэлт илгээлээ. Түр хүлээгээд дахин оролдоно уу.';
+  if (status >= 500) return 'Үйлчилгээ түр саатлаа. Дахин оролдоно уу.';
+  return 'Илгээж чадсангүй';
+}
+
 // Иргэний PDF гарын үсэг (PIN2): файл сонгох → (сонголтоор) байгууллага сонгох →
 // баталгаажуулах код → eID Mongolia App-аас PIN2 → poll → гарын үсэгтэй PDF татах.
 // Байгууллагын нэрийн өмнөөс зурвал (onBehalfOf) гарын үсэг иргэний PIN2 cert-ээр
@@ -53,7 +79,8 @@ export default function EidSignView() {
     pollTimer.current = setInterval(async () => {
       try {
         const r = await fetch(`/api/sign/${encodeURIComponent(sid)}`, { cache: 'no-store' });
-        const data = await r.json();
+        const data = await readJSON(r);
+        if (!data) return; // JSON биш хариу (proxy алдаа) — түр саатал гэж үзээд poll үргэлжилнэ
         if (data.state === 'completed') {
           if (pollTimer.current) clearInterval(pollTimer.current);
           setPhase({ kind: 'completed', sessionID: sid, filename: fname, orgName });
@@ -76,6 +103,11 @@ export default function EidSignView() {
       setPhase({ kind: 'error', msg: 'PDF файл оруулна уу' });
       return;
     }
+    if (f.size > MAX_UPLOAD_BYTES) {
+      const mb = (f.size / (1024 * 1024)).toFixed(1);
+      setPhase({ kind: 'error', msg: `Файл хэт том (${mb} MB) — дээд тал нь 25 MB.` });
+      return;
+    }
     // Сонгосон байгууллагын нэрийн өмнөөс зурах бол etsi/нэрийг phase дундуур зөөнө.
     const orgName = selectedOrg ? orgLabel(selectedOrg) : undefined;
     setPhase({ kind: 'uploading', filename: f.name, orgName });
@@ -86,21 +118,22 @@ export default function EidSignView() {
       // Multipart body postJSON-оор явуулж болохгүй тул CSRF header-г шууд тавина
       // (lib/bff.ts checkOrigin шаарддаг; lib/client.ts-тэй ижил header).
       const r = await fetch('/api/sign/init', { method: 'POST', headers: { [CSRF_HEADER]: '1' }, body: fd });
-      const data = await r.json();
-      if (!r.ok) {
-        setPhase({ kind: 'error', msg: data?.error ?? data?.message ?? 'Илгээж чадсангүй' });
+      const data = await readJSON(r);
+      if (!r.ok || !data) {
+        const fromBody = typeof data?.error === 'string' ? data.error : typeof data?.message === 'string' ? data.message : '';
+        setPhase({ kind: 'error', msg: fromBody || httpErrorMsg(r.status) });
         return;
       }
       setPhase({
         kind: 'waiting',
-        sessionID: data.session_id,
-        filename: data.filename ?? f.name,
-        documentHash: data.document_hash ?? '',
-        verificationCode: data.verification_code ?? '',
+        sessionID: String(data.session_id ?? ''),
+        filename: typeof data.filename === 'string' ? data.filename : f.name,
+        documentHash: typeof data.document_hash === 'string' ? data.document_hash : '',
+        verificationCode: typeof data.verification_code === 'string' ? data.verification_code : '',
         orgName,
       });
-    } catch (err) {
-      setPhase({ kind: 'error', msg: String(err) });
+    } catch {
+      setPhase({ kind: 'error', msg: 'Сүлжээний алдаа. Дахин оролдоно уу.' });
     }
   }
 
