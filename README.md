@@ -30,7 +30,7 @@ landing текст, route бүртгэлээ л эзэмшинэ.
    платформ бүрийн frontend  (brand.config.ts + landing/copy.ts + app/**/page.tsx)
 ```
 
-Цөмийн (`open-gerege-core` → `private-gerege-core`) загварыг давтана. Gerege-д
+Цөмийн (`open-gerege-core`) нэгдмэл суурийн загварыг давтана. Gerege-д
 л хэрэгтэй UI гарвал тэр үед `@gerege/ui-gerege` нэмнэ — өмнө нь биш.
 
 ## Суулгах
