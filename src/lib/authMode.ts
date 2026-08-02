@@ -2,7 +2,7 @@ import 'server-only';
 import { backendFetch } from './api';
 
 // Нэвтрэх гадаргууны горим — платформ өөрөө нэвтрүүлэх үү, дээд SSO руу
-// шилжүүлэх үү. Backend-ийн AUTH_MODE (public-gerege-core) нь ганц эх сурвалж:
+// шилжүүлэх үү. Backend-ийн AUTH_MODE (open-gerege-core) нь ганц эх сурвалж:
 // frontend-д давхардсан env БАЙХГҮЙ, боот үед `GET /site/auth`-аас уншина.
 //
 // Энэ нь платформ ӨӨРӨӨ OIDC issuer эсэхээс (OAUTH_ISSUER) тусдаа тэнхлэг —

@@ -33,7 +33,7 @@ function sameDeviceCallbackUrl(): string {
 // challengeFromNext — OIDC урсгалд `next` нь /oauth/login?login_challenge=… байдаг.
 // Тэндээс login_challenge-ийг гаргана (backend eID push-д rp_app/rp_app_url-г
 // бүртгэгдсэн RP апп-аас resolve хийхэд ашиглана). Base нэвтрэлтэд хоосон.
-// АНХААР: одоогийн core (public-gerege-core v1.0.0)-ийн eID start endpoint-ууд
+// АНХААР: одоогийн core (open-gerege-core v1.0.0)-ийн eID start endpoint-ууд
 // энэ талбарыг хараахан хүлээж авдаггүй — BFF түүнийг backend руу дамжуулахгүй
 // (start-id-д нэмэлт талбар илгээвэл strict декод 400 өгнө). Core дэмжих үед
 // BFF дээр буцааж асаана.
