@@ -22,7 +22,7 @@ jobs:
         run: npm test
 
   # Багц нь брэндийн нэрийг агуулж БОЛОХГҮЙ — тэр нь аппын өмч. Энэ хаалга
-  # `public-gerege-template`-ийн check-brand.mjs-тэй ижил зорилготой.
+  # `open-gerege-mn`-ийн check-brand.mjs-тэй ижил зорилготой.
   brand:
     runs-on: ubuntu-latest
     steps:
@@ -35,7 +35,7 @@ jobs:
           fi
           # Платформ тусгайлсан ХАЯГ ч мөн адил: багц дотор хатуу бичигдсэн
           # docs/help хаяг нь БҮХ платформ дээр буруу газар заана. Ийм алдаа
-          # нэг удаа гарсан (AppShell дотор public-gerege-template-ийн док).
+          # нэг удаа гарсан (AppShell дотор open-gerege-mn-ийн док).
           # `config.tsx` нь тохиргооны анхдагчийг зарладаг цорын ганц газар;
           # тестийн жишиг хаягууд ч мөн зөвшөөрөгдөнө.
           if git grep -nIE "https?://(docs\.|[a-z-]+\.)?(gerege|dgov)\.mn|github\.io/[a-z-]+" \
