@@ -18,6 +18,7 @@ const EVENT_LABEL: Record<string, string> = {
   info_note: 'Иргэний тайлбар',
   decided: 'Шийдвэр гарав',
   delivered: 'Гаралт хүргэгдэв',
+  cancelled: 'Иргэн цуцлав',
   sla_breached: 'Хугацаа хэтэрлээ',
   tacit_approved: 'Хугацаа хэтэрсэн тул зөвшөөрсөнд тооцов',
 };
