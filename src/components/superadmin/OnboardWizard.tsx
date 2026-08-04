@@ -75,7 +75,12 @@ function GoogleStep({ error }: { error?: string }) {
       </div>
       {error && <Alert kind="danger">{error}</Alert>}
       <Alert kind="info">{T('onboard.inviteNotice')}</Alert>
-      <a className="btn btn--google btn--lg btn--block" href="/api/auth/superadmin/onboard/google/start">
+      {/* SSO нь ҮНДСЭН зам: платформ бүрд Google Console бүртгэл шаардахгүй.
+          Google нь fallback болж үлдэнэ (SSO боломжгүй орчинд). */}
+      <a className="btn btn--primary btn--lg btn--block" href="/api/auth/superadmin/onboard/sso/start">
+        <span>{T('onboard.ssoButton')}</span>
+      </a>
+      <a className="btn btn--google btn--lg btn--block" style={{ marginTop: 8 }} href="/api/auth/superadmin/onboard/google/start">
         <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.2 13.3 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-17z"/><path fill="#FBBC05" d="M10.4 28.3a14.5 14.5 0 0 1 0-8.6l-7.8-6.1a24 24 0 0 0 0 20.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.4-4.6 2.2-8.8 2.2-6.4 0-11.8-3.8-13.6-9.3l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
         <span>{T('onboard.googleButton')}</span>
       </a>
@@ -476,7 +481,7 @@ function DoneStep({ codes }: { codes: string[] }) {
 }
 
 // ── Wizard ────────────────────────────────────────────────────────────────────
-export default function OnboardWizard({ code, gerror }: { code?: string; gerror?: string }) {
+export default function OnboardWizard({ code, ssocode, gerror }: { code?: string; ssocode?: string; gerror?: string }) {
   const { T } = useT();
   const [step, setStep] = useState<Step>('google');
   const [onboardToken, setOnboardToken] = useState('');
@@ -507,11 +512,16 @@ export default function OnboardWizard({ code, gerror }: { code?: string; gerror?
 
   // Google callback-аас ирсэн code-ийг onboard_token болгож солино (нэг удаа).
   useEffect(() => {
-    if (!code || exchangedRef.current || onboardToken) return;
+    // Аль IdP-ээс ирснийг ЗАМААР нь ялгана: SSO-гийн code-ыг Google
+    // endpoint руу илгээвэл ойлгомжгүй алдаа гарна.
+    const incoming = ssocode ?? code;
+    if (!incoming || exchangedRef.current || onboardToken) return;
     exchangedRef.current = true;
     setExchanging(true);
     (async () => {
-      const res = await postJSON<{ onboard_token?: string; email?: string }>('/api/auth/superadmin/onboard/google', { code });
+      const res = ssocode
+        ? await postJSON<{ onboard_token?: string; email?: string }>('/api/auth/superadmin/onboard/sso', { code: ssocode })
+        : await postJSON<{ onboard_token?: string; email?: string }>('/api/auth/superadmin/onboard/google', { code });
       setExchanging(false);
       // URL-аас code-ийг цэвэрлэнэ (дахин exchange хийхгүй, refresh-д аюулгүй).
       try { window.history.replaceState(null, '', '/superadmin/onboard'); } catch { /* no-op */ }

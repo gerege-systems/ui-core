@@ -29,7 +29,10 @@ export default function ModulesManager() {
 
   const q = useQuery<AdminModule[]>({
     queryKey: ['admin', 'modules'],
-    queryFn: async () => (await getJSON<{ data?: AdminModule[] }>('/api/admin/platform/modules')).data ?? [],
+    // getJSON нь BaseResponse-ийн .data-г ӨӨРӨӨ задалж буцаадаг ба !ok үед
+    // шиддэг — тиймээс энд дахин .data гэж хандахгүй (тэгвэл undefined болж
+    // жагсаалт чимээгүй хоосорно).
+    queryFn: () => getJSON<AdminModule[]>('/api/admin/platform/modules'),
   });
 
   const toggle = useMutation({
