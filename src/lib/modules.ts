@@ -13,6 +13,8 @@ export interface ModuleStatus {
   id: string;
   kind: 'core' | 'business';
   enabled: boolean;
+  /** Модулийн эзэмшдэг UI зам (backend манифестээс). */
+  ui_prefixes?: string[];
 }
 
 /** Модулиудын төлвийг татна (60с staleTime — nav бүрт дахин татахгүй). */
@@ -38,4 +40,36 @@ export function useModuleEnabled(id: string): boolean {
   if (!data || data.length === 0) return true;
   const mod = data.find((m) => m.id === id);
   return mod ? mod.enabled : true;
+}
+
+/**
+ * Замын эзэн модулийг ХАМГИЙН УРТ угтвараар олно — backend-ийн route
+ * gate-тэй ижил дүрэм. Үүрлэсэн угтвар зөв ажиллана: '/me/eid/' нь
+ * eidproxy-д, '/me/eid/sign' нь sign-д харьяалагдана.
+ */
+export function moduleForPath(modules: ModuleStatus[] | undefined, href: string): ModuleStatus | null {
+  if (!modules || modules.length === 0) return null;
+  let best: ModuleStatus | null = null;
+  let bestLen = -1;
+  for (const m of modules) {
+    for (const p of m.ui_prefixes ?? []) {
+      const match = href === p || href.startsWith(p) || href.startsWith(p + '/');
+      if (match && p.length > bestLen) {
+        best = m;
+        bestLen = p.length;
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Тухайн UI зам харагдах эсэх. Эзэн модуль олдоогүй бол ХАРАГДАНА
+ * (fail-open) — эзэнгүй зам нь ямар ч модульд харьяалагдахгүй core
+ * гадаргуу байж болно.
+ */
+export function usePathEnabled(href: string): boolean {
+  const { data } = useModules();
+  const owner = moduleForPath(data, href);
+  return owner ? owner.enabled : true;
 }
