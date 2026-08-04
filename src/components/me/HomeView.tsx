@@ -6,7 +6,6 @@ import { KeyRound } from 'lucide-react';
 import { useT } from '../../lib/lang';
 import { roleLabel, displayName, type SessionUser } from '../../lib/types';
 import { formatDateMN, formatTS, formatWeekdayMN, initialsOf } from '../../lib/format';
-import EidSummaryCard from './EidSummaryCard';
 import { useBrandName } from '../../config';
 
 const GoogleG = () => (
@@ -99,7 +98,6 @@ export default function HomeView({ me }: { me: SessionUser }) {
       </section>
 
       {/* eID PKI-ийн нэгдсэн тоо (гэрчилгээ/нэвтрэлт/төхөөрөмж) — бодит өгөгдөл */}
-      <EidSummaryCard show={!!me.eid || !!me.eidProxy} />
 
       <div className="trust-strip" style={{ marginTop: 22 }}>
         <span className="trust-strip__item">

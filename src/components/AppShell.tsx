@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getJSON } from '../lib/client';
 import {
   LayoutDashboard, User, ShieldCheck, HelpCircle, LogOut, Menu, Search, ChevronDown,
-  ChevronsUpDown, ChevronsDownUp,
+  ChevronsUpDown, ChevronsDownUp, Puzzle,
   Users, ShieldHalf, Briefcase, Bot, Languages, Building2,
   ScrollText, ShieldAlert, KeyRound,
   Plug,
@@ -104,6 +104,7 @@ const SYSTEMS: NavSystem[] = [
         labelKey: 'group.superadmin',
         items: [
           { href: '/admin/superadmin', labelKey: 'nav.superadminAdmins', icon: Crown, superAdminOnly: true },
+          { href: '/admin/modules', labelKey: 'nav.modules', icon: Puzzle, superAdminOnly: true },
           { href: '/admin/themes', labelKey: 'themes.title', icon: Palette, superAdminOnly: true },
           { href: '/admin/languages', labelKey: 'langs.title', icon: Languages, superAdminOnly: true },
         ],
@@ -547,12 +548,6 @@ export default function AppShell({ user, children }: Props) {
           <div className="topbar2__spacer" />
           <NavSearch items={searchItems} placeholder={T('shell.search')} emptyText={T('shell.noResults')} />
           <div className="topbar2__actions">
-            {docsHref && (
-              <a className="topbar2__docs" href={docsHref} target="_blank" rel="noreferrer" title={T('nav.docs')} aria-label={T('nav.docs')}>
-                <BookOpen size={16} strokeWidth={2} />
-                <span>{T('nav.docs')}</span>
-              </a>
-            )}
             <UserMenu username={displayName(user, lang)} email={user.email} initials={initialsOf(displayName(user, lang))} picture={user.picture} />
           </div>
         </header>

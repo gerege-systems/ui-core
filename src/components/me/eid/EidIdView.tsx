@@ -10,6 +10,7 @@ import { formatTS } from '../../../lib/format';
 import { initialsOf } from '../../../lib/format';
 import { displayName, type SessionUser } from '../../../lib/types';
 import { pkiGet, type PkiSummary } from '../../../lib/pki';
+import EidSummaryCard from '../EidSummaryCard';
 
 // Иргэний eID үнэмлэхний харагдац. Өгөгдөл нь нэвтэрсэн хэрэглэгчийн бичлэг
 // (me.eid — civil_id/national_id/нэр/kyc) + PKI summary-ийн тоонууд. Шинэ
@@ -75,6 +76,10 @@ export default function EidIdView({ me }: { me: SessionUser }) {
           <div className="defrow"><span className="defrow__label">{T('eid.id.created')}</span><span className="defrow__value mono">{formatTS(me.createdAt)}</span></div>
         </div>
       </section>
+      {/* eID PKI самбар — өмнө /me/dashboard дээр байсныг eID хэсэгт
+          нэгтгэв. Ижил ['eid-pki-summary'] query-г хуваалцдаг тул нэмэлт
+          хүсэлт үүсэхгүй. */}
+      <EidSummaryCard show={canView} />
     </>
   );
 }
