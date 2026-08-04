@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getJSON } from '../lib/client';
 import {
   LayoutDashboard, User, ShieldCheck, HelpCircle, LogOut, Menu, Search, ChevronDown,
+  ChevronsUpDown, ChevronsDownUp,
   Users, ShieldHalf, Briefcase, Bot, Languages, Building2,
   ScrollText, ShieldAlert, KeyRound,
   Plug,
@@ -117,38 +118,31 @@ const SYSTEMS: NavSystem[] = [
     adminOnly: true,
     subsystems: [
       {
-        labelKey: 'group.general',
+        labelKey: 'group.management',
+        // Удирдлага: самбар + хэрэглэгч/эрх/тохиргоо. Ганц зүйлтэй
+        // 'group.general' (зөвхөн самбар) байсныг энд нэгтгэв.
         items: [
           { href: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, perm: 'dashboard.view' },
-        ],
-      },
-      {
-        labelKey: 'group.management',
-        items: [
           { href: '/admin/users', labelKey: 'nav.users', icon: Users, perm: 'users.manage' },
-          { href: '/admin/core', labelKey: 'nav.coreSearch', icon: Search, perm: 'users.manage' },
           { href: '/admin/roles', labelKey: 'nav.roles', icon: ShieldHalf, perm: 'roles.manage' },
+          { href: '/admin/core', labelKey: 'nav.coreSearch', icon: Search, perm: 'users.manage' },
           { href: '/admin/settings', labelKey: 'nav.settings', icon: ShieldCheck, perm: 'settings.manage' },
         ],
       },
       {
-        labelKey: 'group.gateway',
+        labelKey: 'group.interop',
+        // Интеграци: гадаад талтай харилцах бүх суваг — API gateway
+        // тохиргоо + байгууллага хоорондын relay. Relay нь ганцаараа
+        // 2 зүйлтэй бүлэг байв.
         items: [
           { href: '/admin/gateway/overview', labelKey: 'nav.gwOverview', icon: Gauge, perm: 'gateway.manage' },
           { href: '/admin/gateway/services', labelKey: 'nav.gwServices', icon: Server, perm: 'gateway.manage' },
           { href: '/admin/applications', labelKey: 'nav.applications', icon: KeyRound, perm: 'gateway.manage' },
-          { href: '/admin/gateway/logs', labelKey: 'nav.gwLogs', icon: ScrollText, perm: 'gateway.manage' },
-        ],
-      },
-      {
-        labelKey: 'group.relay',
-        items: [
           { href: '/admin/relay', labelKey: 'nav.relayDashboard', icon: Gauge, perm: 'relay.view' },
           { href: '/admin/relay/config', labelKey: 'nav.relayConfig', icon: Building2, perm: 'relay.manage' },
         ],
       },
       {
-        // Үйлчилгээний нэгдсэн регистр (CPSV-AP паспорт + нотолгооны каталог).
         labelKey: 'group.registry',
         items: [
           { href: '/admin/registry', labelKey: 'nav.registryOverview', icon: Gauge, perm: 'registry.view' },
@@ -157,20 +151,16 @@ const SYSTEMS: NavSystem[] = [
         ],
       },
       {
-        labelKey: 'group.security',
+        labelKey: 'group.observability',
+        // Хяналт: аудит, аюулгүй байдлын үйл явдал, gateway-ийн лог —
+        // гурвуулаа "юу болсныг харах" домэйн. Өмнө audit+security нь
+        // 2 зүйлтэй бүлэг, лог нь gateway дотор байв.
         items: [
           { href: '/admin/audit', labelKey: 'nav.audit', icon: ScrollText },
           { href: '/admin/security', labelKey: 'nav.security', icon: ShieldAlert },
+          { href: '/admin/gateway/logs', labelKey: 'nav.gwLogs', icon: ScrollText, perm: 'gateway.manage' },
         ],
       },
-    ],
-  },
-  {
-    key: 'manager',
-    labelKey: 'sys.manager',
-    brand: 'Manager System',
-    icon: Briefcase,
-    subsystems: [
       {
         labelKey: 'group.manager',
         items: [
@@ -216,6 +206,8 @@ const SYSTEMS: NavSystem[] = [
           { href: '/me/eid/devices', labelKey: 'nav.eidDevices', icon: Smartphone },
           { href: '/me/eid/logs', labelKey: 'nav.eidLogs', icon: ScrollText },
           { href: '/me/eid/security', labelKey: 'nav.eidSecurity', icon: ShieldCheck },
+          // Гарын үсэг нь eID-ийн чадвар — өмнө 'personal' дотор байв.
+          { href: '/me/eid/sign', labelKey: 'nav.eidSign', icon: FileSignature },
         ],
       },
       {
@@ -223,7 +215,6 @@ const SYSTEMS: NavSystem[] = [
         // Профайл, Тохиргоо нь баруун дээд dropdown-д байгаа тул зүүн цэсэнд давхардуулахгүй.
         items: [
           { href: '/me/organizations', labelKey: 'nav.org', icon: Building2 },
-          { href: '/me/eid/sign', labelKey: 'nav.eidSign', icon: FileSignature },
           { href: '/me/integrations', labelKey: 'nav.integrations', icon: Plug },
           { href: '/me/ai', labelKey: 'nav.ai', icon: Bot },
           { href: '/me/translate', labelKey: 'nav.translate', icon: Languages },
@@ -363,9 +354,41 @@ export default function AppShell({ user, children }: Props) {
   const activeSystem = systems.find(systemMatches) ?? systems[0];
   const [openKey, setOpenKey] = useState(activeSystem?.key ?? '');
   const [collapsed, setCollapsed] = useState(false);
-  // Accordion — зөвхөн НЭГ дэд систем нээлттэй байна (labelKey). Дараах sync
-  // effect нь навигаци/систем солиход идэвхтэй хуудсын дэд системийг нээнэ.
+  // Цэсний задралын горим:
+  //   'single' — accordion, зөвхөн НЭГ бүлэг нээлттэй (өгөгдмөл, хуучин зан)
+  //   'all'    — бүлгүүд бие даан нээгдэнэ, олон нь зэрэг нээлттэй байж болно
+  // Сонголт localStorage-д хадгалагдана. SSR/hydration зөрчлөөс сэргийлж
+  // эхний render дээр ҮРГЭЛЖ өгөгдмөлөөр эхэлж, дараа нь effect-ээр сэргээнэ.
+  const [navMode, setNavMode] = useState<'single' | 'all'>('single');
   const [openSub, setOpenSub] = useState<string>('');
+  const [openSubs, setOpenSubs] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem('nav.expand');
+      if (v === 'all' || v === 'single') setNavMode(v);
+    } catch {
+      // localStorage хаагдсан (private горим) — өгөгдмөлөөр үргэлжилнэ.
+    }
+  }, []);
+
+  const setMode = (m: 'single' | 'all') => {
+    setNavMode(m);
+    try {
+      window.localStorage.setItem('nav.expand', m);
+    } catch {
+      // хадгалагдахгүй ч энэ сешнд ажиллана.
+    }
+  };
+
+  const isOpen = (key: string) => (navMode === 'all' ? openSubs.includes(key) : openSub === key);
+  const toggleSub = (key: string) => {
+    if (navMode === 'all') {
+      setOpenSubs((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
+      return;
+    }
+    setOpenSub((cur) => (cur === key ? '' : key));
+  };
 
   const panel = systems.find((s) => s.key === openKey) ?? activeSystem;
   const panelSubs = panel ? visibleSubsystems(panel) : [];
@@ -453,10 +476,29 @@ export default function AppShell({ user, children }: Props) {
         <div className="sidepanel__head">
           <span className="sidepanel__brand-name">{panel.brand}</span>
           <span className="sidepanel__title">{T(panel.labelKey)}</span>
+          {/* Задралын горим — бүх бүлгийг нээх / нэгийг нээх (accordion). */}
+          <button
+            type="button"
+            className="sidepanel__expand"
+            aria-pressed={navMode === 'all'}
+            title={T(navMode === 'all' ? 'nav.expandSingle' : 'nav.expandAll')}
+            aria-label={T(navMode === 'all' ? 'nav.expandSingle' : 'nav.expandAll')}
+            onClick={() => {
+              const next = navMode === 'all' ? 'single' : 'all';
+              setMode(next);
+              // 'all' руу шилжихэд одоо нээлттэйг хадгална; 'single' руу
+              // буцахад хамгийн сүүлд нээснийг үлдээнэ (цэс бүхэлдээ
+              // хаагдаж, хэрэглэгч чиг баримжаагаа алдахаас сэргийлнэ).
+              if (next === 'all') setOpenSubs(openSub ? [openSub] : []);
+              else setOpenSub(openSubs[openSubs.length - 1] ?? '');
+            }}
+          >
+            {navMode === 'all' ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
+          </button>
         </div>
         <nav className="sidepanel__nav">
           {panelSubs.map((g) => {
-            const open = openSub === g.labelKey;
+            const open = isOpen(g.labelKey);
             return (
             <div key={g.labelKey} className={`sidepanel__group${open ? ' is-open' : ''}`}>
               {/* Дэд системийн толгой — дарахад энэ нээгдэж, бусад нь хаагдана. */}
@@ -464,7 +506,7 @@ export default function AppShell({ user, children }: Props) {
                 type="button"
                 className="sidepanel__group-head"
                 aria-expanded={open}
-                onClick={() => setOpenSub(open ? '' : g.labelKey)}
+                onClick={() => toggleSub(g.labelKey)}
               >
                 <span className="sidepanel__group-label">{navLabel(g as { labelKey: DictKey; label?: (l: string) => string })}</span>
                 <ChevronDown size={15} strokeWidth={2.5} className="sidepanel__chev" />
