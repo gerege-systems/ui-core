@@ -1,8 +1,9 @@
-// eID нэвтрэлтийн RP proxy — БАЙГУУЛЛАГА ХООРОНДЫН (server→server) дамжуулагч.
+import 'server-only';
+// eID нэвтрэлтийн RP proxy-ийн хуваалцсан хэрэгжилт.
 //
 // Энэ платформ SSO-ийн үүрэг гүйцэтгэж байгаа үед бүртгэлтэй апп (RP)-ууд
-// eID нэвтрэлтийг үүгээр дуудна: <sso>/api/rp/eid-auth/{start,start-id,poll}
-// → backend /api/v1/eid-auth/{...}. Backend нь аппын OAuth токеныг (svc:eid-auth
+// eID нэвтрэлтийг <sso>/api/rp/eid-auth/{start,start-id,poll}-оор дуудна →
+// backend /api/v1/eid-auth/{...}. Backend нь аппын OAuth токеныг (svc:eid-auth
 // эрхтэй client_credentials) шалгаад, ӨӨРИЙН eID RP креденшлээр session-ыг
 // эхлүүлж/төлвийг буцаана.
 //
@@ -12,23 +13,13 @@
 //   · статусыг ӨӨРЧЛӨХГҮЙ — 401/403/503 нь клиентийн шийдвэрт чухал,
 //   · cookie/session ХЭРЭГЛЭХГҮЙ — танилт нь зөвхөн Authorization толгой,
 //   · checkOrigin ХЭРЭГГҮЙ — cookie-д тулгуурладаггүй тул CSRF өртөг алга.
-import { BACKEND_BASE, clientIPHeaders } from '../../lib/api';
-
-/** Зөвшөөрөгдсөн үйлдлүүд — дурын зам backend руу нэвтрэхээс сэргийлнэ. */
-const ACTIONS = new Set(['start', 'start-id', 'poll']);
+import { BACKEND_BASE, clientIPHeaders } from './api';
 
 /** Хүсэлтийн биеийн дээд хэмжээ — энгийн JSON тул бага. */
 const MAX_BODY_BYTES = 4096;
 
-/**
- * POST /api/rp/eid-auth/[action] — RP-ийн eID нэвтрэлтийн дуудлагыг backend руу
- * түүхийгээр дамжуулна. `action` нь Next-ийн dynamic сегментээс ирнэ.
- */
-export async function proxyEidAuth(req: Request, action: string): Promise<Response> {
-  if (!ACTIONS.has(action)) {
-    return Response.json({ status: false, message: 'unknown action' }, { status: 404 });
-  }
-
+/** eID нэвтрэлтийн нэг үйлдлийг backend руу түүхийгээр дамжуулна. */
+export async function proxyEidAuth(req: Request, action: 'start' | 'start-id' | 'poll'): Promise<Response> {
   const auth = req.headers.get('authorization') ?? '';
   if (!auth.toLowerCase().startsWith('bearer ')) {
     return Response.json({ status: false, message: 'missing bearer token' }, { status: 401 });
