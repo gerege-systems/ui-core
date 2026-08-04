@@ -98,9 +98,9 @@ export default function ModulesManager() {
         <span className="card__sub">{T('modules.sub')}</span>
       </div>
 
-      {error && <p className="alert alert--error" role="alert">{error}</p>}
+      {error && <p className="alert alert--danger" role="alert">{error}</p>}
       {q.isLoading && <p className="muted">{T('modules.loading')}</p>}
-      {q.isError && <p className="alert alert--error">{T('modules.loadErr')}</p>}
+      {q.isError && <p className="alert alert--danger">{T('modules.loadErr')}</p>}
 
       {business.length > 0 && (
         <>
