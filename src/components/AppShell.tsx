@@ -361,7 +361,11 @@ export default function AppShell({ user, children }: Props) {
   // эхний render дээр ҮРГЭЛЖ өгөгдмөлөөр эхэлж, дараа нь effect-ээр сэргээнэ.
   const [navMode, setNavMode] = useState<'single' | 'all'>('single');
   const [openSub, setOpenSub] = useState<string>('');
-  const [openSubs, setOpenSubs] = useState<string[]>([]);
+  // 'all' горимд НЭЭЛТТЭЙГ биш ХААГДСАНЫГ цуглуулна. Нээлттэйг цуглуулбал
+  // горимд шилжих/localStorage-аас сэргээх/систем солих бүрд жагсаалтыг
+  // дахин бөглөх шаардлагатай болж, аль нэгийг нь мартвал цэс хоосон
+  // нээгддэг. Хаагдсаныг цуглуулбал "бүгд нээлттэй" нь өгөгдмөл байдал.
+  const [closedSubs, setClosedSubs] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -381,10 +385,10 @@ export default function AppShell({ user, children }: Props) {
     }
   };
 
-  const isOpen = (key: string) => (navMode === 'all' ? openSubs.includes(key) : openSub === key);
+  const isOpen = (key: string) => (navMode === 'all' ? !closedSubs.includes(key) : openSub === key);
   const toggleSub = (key: string) => {
     if (navMode === 'all') {
-      setOpenSubs((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
+      setClosedSubs((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
       return;
     }
     setOpenSub((cur) => (cur === key ? '' : key));
@@ -486,11 +490,11 @@ export default function AppShell({ user, children }: Props) {
             onClick={() => {
               const next = navMode === 'all' ? 'single' : 'all';
               setMode(next);
-              // 'all' руу шилжихэд одоо нээлттэйг хадгална; 'single' руу
-              // буцахад хамгийн сүүлд нээснийг үлдээнэ (цэс бүхэлдээ
-              // хаагдаж, хэрэглэгч чиг баримжаагаа алдахаас сэргийлнэ).
-              if (next === 'all') setOpenSubs(openSub ? [openSub] : []);
-              else setOpenSub(openSubs[openSubs.length - 1] ?? '');
+              // 'all' руу шилжихэд БҮГД нээгдэнэ (хаалтын жагсаалт хоосорно).
+              // 'single' руу буцахад идэвхтэй хуудсын бүлгийг нээж үлдээнэ —
+              // цэс бүхэлдээ хаагдаж хэрэглэгч чиг баримжаагаа алдахгүй.
+              if (next === 'all') setClosedSubs([]);
+              else setOpenSub(activeSubKey);
             }}
           >
             {navMode === 'all' ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
