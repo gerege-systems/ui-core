@@ -1,5 +1,5 @@
-import { backendFetch } from '../lib/api';
-import { proxyResult } from '../lib/bff';
+import { backendFetch } from '../../lib/api';
+import { proxyResult } from '../../lib/bff';
 
 export const dynamic = 'force-dynamic';
 
