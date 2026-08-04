@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { KeyRound, LogIn, FileSignature, Smartphone, Building2 } from 'lucide-react';
 import { useT } from '../../lib/lang';
 import { pkiGet, type PkiSummary } from '../../lib/pki';
+import { useModuleEnabled } from '../../lib/modules';
 
 function Tile({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: React.ReactNode; tone?: string }) {
   return (
@@ -26,13 +27,16 @@ function Tile({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
  */
 export default function EidSummaryCard({ show }: { show: boolean }) {
   const { T } = useT();
+  // Зүүн цэсийн EID бүлэгтэй ХАМТ гарч/алга болно (AppShell-ийн
+  // group.eid нь мөн 'eidproxy'-оор хаагдана). Fail-open.
+  const eidOn = useModuleEnabled('eidproxy');
   const q = useQuery({
     queryKey: ['eid-pki-summary'],
     queryFn: () => pkiGet<PkiSummary>('/api/me/eid/summary'),
-    enabled: show,
+    enabled: show && eidOn,
   });
 
-  if (!show) return null;
+  if (!show || !eidOn) return null;
 
   const forbidden = q.data?.status === 403;
   const s = q.data?.data ?? null;
