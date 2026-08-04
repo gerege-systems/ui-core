@@ -68,7 +68,14 @@ type Phase = 'idle' | 'starting' | 'waiting' | 'expired' | 'refused' | 'error' |
 
 const POLL_INTERVAL_MS = 2500;
 
-export default function LoginForm({ next, notice, googleLink, googleError, mfaGate, autoFocus = true }: { next: string; notice?: string; googleLink?: boolean; googleError?: boolean; mfaGate?: boolean; autoFocus?: boolean }) {
+// GoogleMark — товчны албан ёсны лого (энгийн болон googleOnly горимд адил).
+function GoogleMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.2 13.3 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-17z"/><path fill="#FBBC05" d="M10.4 28.3a14.5 14.5 0 0 1 0-8.6l-7.8-6.1a24 24 0 0 0 0 20.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.4-4.6 2.2-8.8 2.2-6.4 0-11.8-3.8-13.6-9.3l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+  );
+}
+
+export default function LoginForm({ next, notice, googleLink, googleError, mfaGate, googleOnly, autoFocus = true }: { next: string; notice?: string; googleLink?: boolean; googleError?: boolean; mfaGate?: boolean; googleOnly?: boolean; autoFocus?: boolean }) {
   const { T } = useT();
 
   const [method, setMethod] = useState<Method>('id');
@@ -86,6 +93,8 @@ export default function LoginForm({ next, notice, googleLink, googleError, mfaGa
   // Бүртгэгдсэн RP апп-аас (OIDC) нэвтэрч байвал login_challenge — eID push-д
   // rp_app/rp_app_url-г үүгээр дамжуулна (base нэвтрэлтэд хоосон).
   const loginChallenge = challengeFromNext(next);
+  // Google руу эхлүүлэх зам — энгийн болон googleOnly горим нэгийг хэрэглэнэ.
+  const googleHref = `/api/auth/google/start${next && next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`;
 
   // unmount хийсний дараа интервалд timer-уудыг цэвэрлэхэд ашиглана.
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -286,6 +295,34 @@ export default function LoginForm({ next, notice, googleLink, googleError, mfaGa
 
   // MFA gate идэвхжсэн бол зөвхөн 2 дахь хүчин зүйлийн challenge-ийг харуулна.
   if (mfa) return <MFAChallenge mfaToken={mfa.token} next={next} />;
+
+  // googleOnly — superadmin бүртгэлийн (enroll) урсгалд IdP зөвхөн Google-ийг
+  // санал болгоно: eID арга, QR, шинээр бүртгүүлэх холбоос бүгд алга. Дуудагч
+  // тал энэ тугийг backend-ийн `Enroll` (бүртгэгдсэн redirect_uri-аас гарна)
+  // үнэн үед л асаана — өөрөөр бол ЭНГИЙН дэлгэц (fail-open) хэвээр.
+  //
+  // googleLink горимд ХАМААРАХГҮЙ: тэнд хэрэглэгч Google-ээс сая буцаж ирээд
+  // eID-ээр баталгаажуулах ёстой тул eID хэсгийг нуувал урсгал тасарна.
+  if (googleOnly && !googleLink) {
+    return (
+      <div className="form-grid" aria-live="polite">
+        <div>
+          <h1 id="login-title">{T('auth.google.onlyTitle')}</h1>
+          <p className="signin-card__lede" style={{ marginTop: 6, fontSize: 14 }}>
+            {T('auth.google.onlySub')}
+          </p>
+        </div>
+
+        {noticeText && <Alert kind={noticeKind}>{noticeText}</Alert>}
+        {googleError && <Alert kind="danger">{T('auth.google.error')}</Alert>}
+
+        <a className="btn btn--google btn--lg btn--block" href={googleHref}>
+          <GoogleMark />
+          <span>{T('auth.google.button')}</span>
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="form-grid" aria-live="polite">
@@ -494,11 +531,8 @@ export default function LoginForm({ next, notice, googleLink, googleError, mfaGa
         <>
           <div className="login-or"><span>{T('auth.eid.or')}</span></div>
 
-          <a
-            className="btn btn--google btn--lg btn--block"
-            href={`/api/auth/google/start${next && next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}
-          >
-            <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.2 13.3 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-17z"/><path fill="#FBBC05" d="M10.4 28.3a14.5 14.5 0 0 1 0-8.6l-7.8-6.1a24 24 0 0 0 0 20.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.4-4.6 2.2-8.8 2.2-6.4 0-11.8-3.8-13.6-9.3l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+          <a className="btn btn--google btn--lg btn--block" href={googleHref}>
+            <GoogleMark />
             <span>{T('auth.google.button')}</span>
           </a>
         </>
