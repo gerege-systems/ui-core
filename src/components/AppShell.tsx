@@ -18,6 +18,7 @@ import UserMenu from './UserMenu';
 import NavSearch, { type SearchItem } from './NavSearch';
 import { signOut } from '../lib/signout';
 import { useT } from '../lib/lang';
+import { useModules } from '../lib/modules';
 import type { DictKey } from '../lib/i18n';
 import { displayName, isAdminLevel, isSuperAdmin } from '../lib/types';
 import { initialsOf } from '../lib/format';
@@ -62,6 +63,12 @@ interface NavItem {
 // Систем бүр ДОР ХАЯЖ 1 дэд системтэй тул labelKey ЗААВАЛ (нэргүй бүлэг байхгүй).
 interface NavSubsystem {
   labelKey: DictKey;
+  /**
+   * Модулийн ID (V4.0 Modular Platform). Өгвөл тухайн модуль унтраалттай үед
+   * ЭНЭ БҮЛЭГ БҮХЭЛДЭЭ цэснээс алга болно. Fail-open: жагсаалт ачаалагдаагүй
+   * бол харагдана — аюулгүй байдлын хил нь backend-ийн route gate.
+   */
+  module?: string;
   /** Аппын өөрийн толиос шийдэх (`navExtra`-аар үүссэн бүлэгт). */
   label?: (lang: string) => string;
   items: NavItem[];
@@ -200,6 +207,9 @@ const SYSTEMS: NavSystem[] = [
       },
       {
         labelKey: 'group.eid',
+        // eID PKI самбар (Профайл) энэ бүлэгтэй ХАМТ гарч/алга болно —
+        // EidSummaryCard мөн ижил модулиар хаагдана.
+        module: 'eidproxy',
         items: [
           { href: '/me/eid/id', labelKey: 'nav.eidId', icon: CreditCard },
           { href: '/me/eid/certificates', labelKey: 'nav.eidCerts', icon: KeyRound },
@@ -263,6 +273,16 @@ export default function AppShell({ user, children }: Props) {
     (navRoutes ?? []).some((r) => href === r || href.startsWith(r.endsWith('/') ? r : r + '/'));
   const served = (i: NavItem) => (i.optIn ? listed(i.href) : !navRoutes || listed(i.href));
 
+  // Модулийн gate — унтраалттай модулийн цэсийн бүлэг алга болно.
+  // FAIL-OPEN: жагсаалт ачаалагдаагүй/алдаатай бол бүгдийг харуулна;
+  // аюулгүй байдлын хил нь backend (унтраалттай модулийн route 404).
+  const { data: modules } = useModules();
+  const moduleOn = (id?: string) => {
+    if (!id || !modules || modules.length === 0) return true;
+    const m = modules.find((x) => x.id === id);
+    return m ? m.enabled : true;
+  };
+
   // Платформын өөрийн цэсийг зохих бүлэгт нь оруулаад, rail-ийн нэрийг дарж
   // бичсэн бол сольно (хэтэвчид «Иргэн» биш «Түрийвч»).
   const nav = useMemo(() => {
@@ -299,6 +319,7 @@ export default function AppShell({ user, children }: Props) {
 
   const visibleSubsystems = (s: NavSystem) =>
     s.subsystems
+      .filter((g) => moduleOn(g.module))
       .map((g) => ({ ...g, items: g.items.filter((i) => served(i) && canSeeItem(i)) }))
       .filter((g) => g.items.length > 0);
   const systems = nav.filter((s) => {
