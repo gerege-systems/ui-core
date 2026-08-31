@@ -20,14 +20,53 @@ function isMobileBrowser(): boolean {
   return typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-// sameDeviceCallbackUrl — платформ стандарт буцах зам <origin>/auth/eid/callback. iOS дээрх custom
-// browser (Chrome/Edge)-ыг зөв буцаах retScheme query-г нэмнэ (eID app https-ийг тэр browser-аар нээнэ).
+// Буцах browser-ийн hint. Хэрэглэгч АЛЬ browser-ээс нэвтэрснийг eID апп руу дамжуулна — approve
+// хийсний дараа ЯГ ТЭР browser руу буцна (эс бөгөөс системийн default — iOS дээр ихэвчлэн Safari —
+// нээгдэж, хэрэглэгч нэвтэрч эхэлсэн цонхоо алддаг):
+//   iOS     → retScheme = browser-ийн өөрийн https scheme/token (апп scheme-ийг солино эсвэл
+//             open-url хэлбэрээр нээнэ; апп талд allowlist).
+//   Android → retPkg    = browser-ийн package (апп custom tab-ыг ЯГ тэр package-аар нээнэ).
+// Танихгүй browser (ж: Brave — UA нь Safari/Chrome-оос ялгарахгүй) → hint байхгүй → default browser.
+const IOS_BROWSERS: Array<[RegExp, string]> = [
+  [/CriOS/i, 'googlechromes'], // Chrome
+  [/EdgiOS/i, 'microsoft-edge-https'], // Edge
+  [/FxiOS/i, 'firefox'], // Firefox
+  [/Focus\//i, 'firefox-focus'], // Firefox Focus
+  [/OPT\//i, 'touch-https'], // Opera Touch
+  [/OPiOS|OPR\//i, 'opera-https'], // Opera
+  [/DuckDuckGo/i, 'ddgQuickLink'], // DuckDuckGo
+  [/YaBrowser|YaSearchBrowser/i, 'yandexbrowser-open-url'], // Yandex
+];
+
+// "Chrome/"-ыг ХАМГИЙН СҮҮЛД — Chromium суурьтай бүх browser (Edge, Opera, Samsung, Yandex…) UA-даа
+// "Chrome/"-ыг агуулдаг тул эхэнд шалгавал бүгд Chrome болж таарна.
+const ANDROID_BROWSERS: Array<[RegExp, string]> = [
+  [/EdgA\//i, 'com.microsoft.emmx'], // Edge
+  [/OPR\//i, 'com.opera.browser'], // Opera
+  [/Opera Mini/i, 'com.opera.mini.native'], // Opera Mini
+  [/SamsungBrowser\//i, 'com.sec.android.app.sbrowser'], // Samsung Internet
+  [/YaBrowser\//i, 'com.yandex.browser'], // Yandex
+  [/DuckDuckGo\//i, 'com.duckduckgo.mobile.android'], // DuckDuckGo
+  [/Vivaldi\//i, 'com.vivaldi.browser'], // Vivaldi
+  [/Whale\//i, 'com.naver.whale'], // Naver Whale
+  [/UCBrowser\//i, 'com.UCMobile.intl'], // UC Browser
+  [/Focus\//i, 'org.mozilla.focus'], // Firefox Focus
+  [/Firefox\//i, 'org.mozilla.firefox'], // Firefox
+  [/Chrome\//i, 'com.android.chrome'], // Chrome (сүүлд)
+];
+
+function browserHint(param: string, table: Array<[RegExp, string]>, ua: string): string {
+  const hit = table.find(([re]) => re.test(ua));
+  return hit ? '?' + param + '=' + encodeURIComponent(hit[1]) : '';
+}
+
+// sameDeviceCallbackUrl — платформ стандарт буцах зам <origin>/auth/eid/callback + browser hint.
 function sameDeviceCallbackUrl(): string {
   const ua = navigator.userAgent;
-  let retScheme = '';
-  if (/CriOS/i.test(ua)) retScheme = 'googlechromes'; // Chrome on iOS
-  else if (/EdgiOS/i.test(ua)) retScheme = 'microsoft-edge-https'; // Edge on iOS
-  return window.location.origin + '/auth/eid/callback' + (retScheme ? '?retScheme=' + retScheme : '');
+  const base = window.location.origin + '/auth/eid/callback';
+  if (/iPhone|iPad|iPod/i.test(ua)) return base + browserHint('retScheme', IOS_BROWSERS, ua);
+  if (/Android/i.test(ua)) return base + browserHint('retPkg', ANDROID_BROWSERS, ua);
+  return base;
 }
 
 // challengeFromNext — OIDC урсгалд `next` нь /oauth/login?login_challenge=… байдаг.
